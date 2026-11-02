@@ -11,14 +11,24 @@
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
+
+/* ====== خلفية موحّدة مع صفحة الدخول ====== */
 body{
   font-family:"Tajawal",sans-serif;
-  background:#f7f7f2 url("https://i.imgur.com/JxVjnIo.jpg") center/cover no-repeat fixed;
+  min-height:100vh;
   color:var(--text);
+  background:
+    linear-gradient(115deg, rgba(8,29,48,.80), rgba(12,43,62,.75)),
+    url("https://i.imgur.com/JxVjnIo.jpg") center / cover no-repeat fixed;
 }
-@media(max-width:900px){
-  body{background-attachment:scroll}
+@media(max-width:760px){
+  body{
+    background:
+      linear-gradient(rgba(8,29,48,.87), rgba(8,29,48,.94)),
+      url("https://i.imgur.com/JxVjnIo.jpg") center / cover no-repeat;
+  }
 }
+
 button,input,select,textarea{font:inherit}
 button{cursor:pointer;border:0;background:none;color:inherit}
 a{text-decoration:none;color:inherit}
@@ -111,12 +121,22 @@ aside::before{
 
 /* ====== MAIN ====== */
 main{padding:24px clamp(16px,2.4vw,32px);min-width:0}
+
+/* عناوين الصفحة - مرئية على الخلفية الداكنة */
 .topbar{
   display:flex;align-items:center;justify-content:space-between;
   gap:12px;flex-wrap:wrap;margin-bottom:20px;
 }
-h1{font-size:24px;font-weight:800;color:var(--navy);letter-spacing:-.4px}
-.sub{color:var(--muted);font-size:14px;margin-top:4px;line-height:1.6}
+.topbar h1{
+  font-size:24px;font-weight:800;
+  color:#fff;
+  letter-spacing:-.4px;
+  text-shadow:0 1px 3px rgba(0,0,0,.25);
+}
+.topbar .sub{
+  color:rgba(255,255,255,.85);
+  font-size:14px;margin-top:4px;line-height:1.6;
+}
 
 /* ====== CARDS ====== */
 .cards{
@@ -154,6 +174,8 @@ h1{font-size:24px;font-weight:800;color:var(--navy);letter-spacing:-.4px}
   border-bottom:1px solid #edf2f7;
 }
 .panel h2{font-size:19px;font-weight:800;color:var(--navy)}
+.panel p{color:var(--muted);line-height:1.8}
+.panel .sub{color:var(--muted);font-size:14px}
 
 /* ====== BUTTONS ====== */
 .btn{
@@ -172,6 +194,7 @@ h1{font-size:24px;font-weight:800;color:var(--navy);letter-spacing:-.4px}
 .tools input,.tools select,.field input,.field select,.field textarea{
   border:1px solid var(--border);border-radius:10px;
   padding:10px 12px;background:#fff;min-width:0;min-height:40px;
+  color:var(--text);
 }
 .field{display:grid;gap:7px}
 .field label{font-size:14px;font-weight:700;color:#29465f}
@@ -233,14 +256,16 @@ tbody tr:last-child td{border-bottom:0}
 .notice.info{background:#eaf7f7;color:#066b70;border-color:#c6eeee}
 .notice.success{background:#eafaf1;color:#0f7a4a;border-color:#c6eede}
 
-/* ====== MODALS ====== */
+/* ====== MODALS — مكبّرة بدون سكرول ====== */
 .modal-backdrop,.confirm-backdrop{
   position:fixed;inset:0;z-index:1000;
   background:rgba(8,27,44,.62);backdrop-filter:blur(5px);
-  display:flex;align-items:center;justify-content:center;padding:20px;
+  display:flex;align-items:center;justify-content:center;padding:16px;
+  overflow-y:auto;
 }
 .confirm-backdrop{z-index:3000}
 .modal-backdrop.hidden{display:none!important}
+
 .edit-modal,.confirm-card{
   width:min(620px,100%);
   max-height:calc(100dvh - 32px);overflow:auto;
@@ -249,34 +274,47 @@ tbody tr:last-child td{border-bottom:0}
   animation:modalIn .18s ease-out;
 }
 .confirm-card{width:min(440px,100%)}
+
+/* نوافذ الطلاب أوسع وأطول */
+#addStudentBackdrop .edit-modal,
+#studentEditBackdrop .edit-modal,
+#transferStudentBackdrop .edit-modal{
+  width:min(920px,100%);
+  max-height:calc(100dvh - 24px);
+}
+#studentManageBackdrop .edit-modal{
+  width:min(680px,100%);
+}
+
 @keyframes modalIn{from{opacity:0;transform:translateY(8px) scale(.99)}to{opacity:1;transform:translateY(0) scale(1)}}
 .modal-head{
   display:flex;align-items:flex-start;justify-content:space-between;
-  gap:12px;padding:15px 20px 12px;border-bottom:1px solid #edf1f5;
+  gap:12px;padding:16px 22px 13px;border-bottom:1px solid #edf1f5;
 }
 .modal-head h2{color:var(--navy);font-size:20px}
-.modal-head p{margin:4px 0 0;color:var(--muted);font-size:12px}
+.modal-head p{margin:4px 0 0;color:var(--muted);font-size:12.5px}
 .modal-close{
   border:1px solid var(--border);background:#fff;color:#64748b;
   border-radius:10px;width:38px;height:38px;font-size:22px;line-height:1;
 }
 .modal-close:hover{background:#f5f8fc}
-.modal-body{padding:14px 20px}
-.modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.modal-body{padding:16px 22px}
+.modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .modal-grid .wide{grid-column:1/-1}
-.modal-field{display:grid;gap:5px}
+.modal-field{display:grid;gap:6px}
 .modal-field label{font-weight:800;font-size:14px;color:var(--navy)}
 .modal-field input,.modal-field select,.modal-field textarea{
   width:100%;border:1px solid var(--border);border-radius:11px;
-  padding:9px 11px;background:#fff;color:var(--text);min-height:42px;
+  padding:10px 12px;background:#fff;color:var(--text);min-height:44px;
+  font-size:14.5px;
 }
-.modal-field textarea{min-height:76px;line-height:1.65;resize:vertical}
-.modal-hint{font-size:12px;color:var(--muted);line-height:1.7}
+.modal-field textarea{min-height:80px;line-height:1.65;resize:vertical}
+.modal-hint{font-size:12.5px;color:#5a6b7d;line-height:1.7}
 .modal-foot{
   display:flex;align-items:center;justify-content:space-between;
-  gap:10px;padding:10px 20px;border-top:1px solid #edf1f5;
+  gap:10px;padding:12px 22px;border-top:1px solid #edf1f5;
 }
-.save-state{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:8px}
+.save-state{font-size:13px;color:#5a6b7d;display:flex;align-items:center;gap:8px}
 .spinner{
   width:16px;height:16px;border:2px solid #b8dedd;border-top-color:var(--teal);
   border-radius:50%;animation:spin .7s linear infinite;
@@ -372,14 +410,14 @@ body.modal-open{overflow:hidden}
 .attendance-table{min-width:860px}
 .attendance-table select{
   min-width:120px;padding:8px 10px;border:1px solid var(--border);
-  border-radius:9px;background:#fff;
+  border-radius:9px;background:#fff;color:var(--text);
 }
 .attendance-table .attendance-achievements-input,
 .attendance-table .attendance-note-input{
   display:block;width:100%;min-width:190px;min-height:76px;
   padding:11px 12px;font-size:14px;line-height:1.7;
   background:#fff;border:1px solid var(--border);border-radius:11px;
-  resize:vertical;
+  resize:vertical;color:var(--text);
 }
 .attendance-table .attendance-achievements-input:hover,
 .attendance-table .attendance-note-input:hover{border-color:#b8cbd8}
@@ -402,8 +440,9 @@ body.modal-open{overflow:hidden}
   color:#fff;font-size:15px;font-weight:800;text-align:center;
   padding:16px 12px;margin-top:18px;
   border-top:1px solid rgba(213,173,98,.55);
-  background:linear-gradient(90deg,rgba(213,173,98,.04),rgba(7,139,145,.08),rgba(213,173,98,.04));
-  border-radius:0 0 12px 12px;line-height:1.9;
+  background:linear-gradient(90deg,rgba(213,173,98,.10),rgba(7,139,145,.15),rgba(213,173,98,.10));
+  backdrop-filter:blur(8px);
+  border-radius:12px;line-height:1.9;
 }
 
 /* ====== RESPONSIVE ====== */
@@ -422,6 +461,11 @@ body.modal-open{overflow:hidden}
   .modal-foot{flex-direction:column;align-items:stretch}
   .modal-foot .actions{width:100%}
   .modal-foot .btn{flex:1}
+  #addStudentBackdrop .edit-modal,
+  #studentEditBackdrop .edit-modal,
+  #transferStudentBackdrop .edit-modal{
+    width:100%;
+  }
 }
 
 @media(prefers-reduced-motion:reduce){
