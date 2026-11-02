@@ -537,6 +537,11 @@ async function loadGroups() {
 
   if (!cachedGroups.length) {
     container.innerHTML = '<div class="empty">لا توجد حلقات.</div>';
+    const manageSel = $("manageGroupSelect");
+    if (manageSel) {
+      manageSel.innerHTML = '<option value="">اختر الحلقة التي تريد إدارتها</option>';
+      updateManageGroupButtons();
+    }
     return;
   }
 
@@ -572,15 +577,64 @@ async function loadGroups() {
       </div>
       <div class="group-card-actions">
         <span class="group-count">${cnt} ${cnt === 1 ? "طالب" : "طلاب"}</span>
-        <div class="actions">
-          <button class="group-view-btn" type="button" data-view-group="${escapeHtml(g.id)}" data-group-name="${escapeHtml(g.name || "حلقة")}">عرض الحلقة</button>
-          ${(currentProfile.role === "manager" || g.teacher_id === currentProfile.id)
-            ? `<button class="btn danger" type="button" data-delete-group="${escapeHtml(g.id)}" data-group-name="${escapeHtml(g.name || "حلقة")}" title="حذف الحلقة" style="padding:7px 10px;font-size:13px"><i class="fa-solid fa-trash"></i></button>`
-            : ""}
-        </div>
+        <button class="group-view-btn" type="button" data-view-group="${escapeHtml(g.id)}" data-group-name="${escapeHtml(g.name || "حلقة")}">عرض الحلقة</button>
       </div>
     </article>`;
   }).join("");
+
+  // تعبئة قائمة الاختيار في قسم الإدارة
+  const manageSel = $("manageGroupSelect");
+  if (manageSel) {
+    const prev = manageSel.value;
+    manageSel.innerHTML = '<option value="">اختر الحلقة التي تريد إدارتها</option>' +
+      cachedGroups
+        .filter(g => currentProfile.role === "manager" || g.teacher_id === currentProfile.id)
+        .map(g => `<option value="${escapeHtml(g.id)}">${escapeHtml(g.name || "حلقة")}</option>`)
+        .join("");
+    if ([...manageSel.options].some(o => o.value === prev)) manageSel.value = prev;
+    updateManageGroupButtons();
+  }
+}
+
+function updateManageGroupButtons() {
+  const sel = $("manageGroupSelect");
+  const editBtn = $("manageEditGroupBtn");
+  const delBtn = $("manageDeleteGroupBtn");
+  if (!sel || !editBtn || !delBtn) return;
+
+  const group = cachedGroups.find(g => g.id === sel.value);
+  const canEdit = !!group;
+  const canDelete = !!group && (currentProfile.role === "manager" || group.teacher_id === currentProfile.id);
+
+  editBtn.disabled = !canEdit;
+  delBtn.disabled = !canDelete;
+}
+
+function openEditGroupModal(id) {
+  const group = cachedGroups.find(g => g.id === id);
+  if (!group) { message("الحلقة غير موجودة.", "error"); return; }
+
+  if (currentProfile.role !== "manager" && group.teacher_id !== currentProfile.id) {
+    message("يمكنك تعديل حلقاتك فقط.", "error");
+    return;
+  }
+
+  const name = prompt("اسم الحلقة:", group.name || "");
+  if (name === null) return;
+  if (!name.trim()) { message("الاسم مطلوب.", "error"); return; }
+
+  const type = prompt("نوع الحلقة:", group.group_type || "");
+  if (type === null) return;
+
+  db.from("groups").update({
+    name: name.trim(),
+    group_type: type.trim() || null
+  }).eq("id", id).select("id").then(({ data, error }) => {
+    if (error) { message("تعذر التعديل: " + error.message, "error"); return; }
+    if (!data?.length) { message("لم يتم التعديل — تحقق من الصلاحيات.", "error"); return; }
+    message("تم تعديل الحلقة.", "success");
+    loadGroups();
+  });
 }
 
 async function openGroupDetail(id, name) {
@@ -1179,14 +1233,24 @@ function bindEvents() {
   });
 
   $("groupsRows").addEventListener("click", async e => {
-    const delBtn = e.target.closest("[data-delete-group]");
-    if (delBtn) {
-      await deleteGroup(delBtn.dataset.deleteGroup, delBtn.dataset.groupName);
-      return;
-    }
     const viewBtn = e.target.closest("[data-view-group]");
     if (!viewBtn) return;
     await openGroupDetail(viewBtn.dataset.viewGroup, viewBtn.dataset.groupName);
+  });
+
+  $("manageGroupSelect")?.addEventListener("change", updateManageGroupButtons);
+
+  $("manageEditGroupBtn")?.addEventListener("click", async () => {
+    const id = $("manageGroupSelect").value;
+    if (!id) return;
+    openEditGroupModal(id);
+  });
+
+  $("manageDeleteGroupBtn")?.addEventListener("click", async () => {
+    const id = $("manageGroupSelect").value;
+    const group = cachedGroups.find(g => g.id === id);
+    if (!group) return;
+    await deleteGroup(group.id, group.name || "حلقة");
   });
 
   $("backToGroups").addEventListener("click", () => {
