@@ -755,7 +755,7 @@ async function resetMonth() {
 }
 
 // =====================================================
-// Delete group (جديد)
+// Delete group
 // =====================================================
 async function deleteGroup(id, name) {
   if (!["manager", "teacher"].includes(currentProfile.role)) {
@@ -837,7 +837,7 @@ async function loadTeachers() {
       <td>${escapeHtml(t.full_name || "—")}</td>
       <td>—</td>
       <td>${t.is_active ? '<span class="tag">نشط</span>' : '<span class="group-pill unassigned">معطّل</span>'}</td>
-      <td><button class="btn secondary" data-toggle-teacher="${escapeHtml(t.id)}" data-active="${t.is_active}">${t.is_active ? "تعطيل" : "تفعيل"}</button></td>
+      <td><div class="actions"><button class="btn secondary" data-toggle-teacher="${escapeHtml(t.id)}" data-active="${t.is_active}">${t.is_active ? "تعطيل" : "تفعيل"}</button><button class="btn danger" data-delete-teacher="${escapeHtml(t.id)}" data-teacher-name="${escapeHtml(t.full_name || "المعلم")}" title="حذف نهائي"><i class="fa-solid fa-trash"></i></button></div></td>
     </tr>`).join("") || '<tr><td colspan="4" class="empty">لا يوجد معلمون.</td></tr>';
 }
 
@@ -853,6 +853,37 @@ async function toggleTeacher(id, active) {
   if (error) { message("تعذر التحديث: " + error.message, "error"); return; }
   message("تم التحديث.", "success");
   loadTeachers();
+}
+
+async function deleteTeacher(id, name) {
+  if (currentProfile.role !== "manager") {
+    message("حذف المعلمين متاح للمدير فقط.", "error");
+    return;
+  }
+
+  if (!await confirmDialog({
+    title: "حذف حساب المعلم",
+    text: `سيتم حذف حساب «${name}» نهائياً. لا يمكن التراجع.`,
+    confirmText: "نعم، احذف",
+    danger: true
+  })) return;
+
+  const { data, error } = await db.rpc("delete_teacher_account", {
+    p_teacher_id: id
+  });
+
+  if (error) {
+    message("تعذر الحذف: " + error.message, "error");
+    return;
+  }
+  if (data?.error) {
+    message(data.error, "error");
+    return;
+  }
+
+  message("تم حذف حساب المعلم.", "success");
+  loadTeachers();
+  loadOverview();
 }
 
 async function createTeacher(e) {
@@ -1175,9 +1206,14 @@ function bindEvents() {
   $("resetMonthlyAttendanceBtn").addEventListener("click", resetMonth);
 
   $("teachersRows").addEventListener("click", e => {
-    const btn = e.target.closest("[data-toggle-teacher]");
-    if (!btn) return;
-    toggleTeacher(btn.dataset.toggleTeacher, btn.dataset.active === "true");
+    const delBtn = e.target.closest("[data-delete-teacher]");
+    if (delBtn) {
+      deleteTeacher(delBtn.dataset.deleteTeacher, delBtn.dataset.teacherName);
+      return;
+    }
+    const toggleBtn = e.target.closest("[data-toggle-teacher]");
+    if (!toggleBtn) return;
+    toggleTeacher(toggleBtn.dataset.toggleTeacher, toggleBtn.dataset.active === "true");
   });
 
   $("openAddTeacherModal").addEventListener("click", () => {
