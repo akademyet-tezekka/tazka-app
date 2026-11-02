@@ -11,184 +11,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-
-  <style>
-    :root{
-      --navy:#10283f; --navy-2:#163c57;
-      --teal:#078b91; --teal-dark:#06757b;
-      --gold:#d5ad62;
-      --bg:#f2f6fb; --text:#19334b;
-      --muted:#718096; --border:#dce4ed;
-      --danger:#c94350;
-    }
-    *{box-sizing:border-box;margin:0;padding:0}
-    html,body{height:100%}
-    body{
-      font-family:"Tajawal",sans-serif;
-      background:var(--bg);
-      color:var(--text);
-      min-height:100vh;
-    }
-    button{font:inherit;cursor:pointer;border:0;background:none;color:inherit}
-    input,select,textarea{font:inherit}
-    a{text-decoration:none;color:inherit}
-
-    /* ====== Layout ====== */
-    .shell{
-      display:grid;
-      grid-template-columns:260px 1fr;
-      min-height:100vh;
-    }
-
-    /* ====== Sidebar ====== */
-    aside{
-      background:linear-gradient(165deg,#102b46 0%,#163c57 58%,#075c68 100%);
-      color:#fff;
-      padding:20px 16px;
-      position:relative;
-      overflow:hidden;
-    }
-    aside::before{
-      content:"";
-      position:absolute;
-      width:240px;height:240px;
-      border:1px solid rgba(255,255,255,.07);
-      border-radius:50%;
-      inset:auto -110px -70px auto;
-      pointer-events:none;
-    }
-    .brand{
-      display:flex;align-items:center;gap:11px;
-      font-size:19px;font-weight:800;
-      padding:4px 6px 16px;
-      border-bottom:1px solid rgba(255,255,255,.15);
-      position:relative;z-index:1;
-    }
-    .brand span{color:var(--gold)}
-    .brand-logo{
-      width:48px;height:48px;border-radius:50%;
-      background:#fff;border:2px solid var(--gold);
-      object-fit:cover;flex-shrink:0;
-    }
-    .sidebar-welcome{
-      margin:14px 0 16px;
-      padding:10px 12px;border-radius:12px;
-      background:rgba(255,255,255,.08);
-      font-size:.85rem;line-height:1.5;
-      text-align:center;
-      overflow-wrap:anywhere;
-    }
-    .nav{display:grid;gap:5px}
-    .nav button{
-      border-radius:10px;
-      text-align:right;
-      padding:11px 13px;
-      color:#dbe5ed;
-      border:1px solid transparent;
-      transition:background .18s,transform .18s;
-      display:flex;align-items:center;gap:10px;
-      font-size:15px;
-    }
-    .nav button:hover{background:rgba(255,255,255,.09);color:#fff}
-    .nav button.active{
-      background:linear-gradient(110deg,rgba(255,255,255,.14),rgba(255,255,255,.04));
-      border-color:rgba(255,255,255,.13);
-      color:#fff;
-      box-shadow:inset -3px 0 0 var(--gold);
-    }
-    .nav button i{width:20px;text-align:center;font-size:15px;color:var(--gold)}
-    .logout-btn{
-      margin-top:20px;
-      width:100%;
-      padding:11px 14px;
-      border-radius:10px;
-      background:rgba(201,67,80,.18);
-      color:#ffd5da;
-      font-weight:700;
-      border:1px solid rgba(201,67,80,.35);
-      transition:background .18s;
-      display:flex;align-items:center;justify-content:center;gap:8px;
-    }
-    .logout-btn:hover{background:rgba(201,67,80,.3)}
-
-    /* ====== Main ====== */
-    main{
-      padding:24px clamp(16px,2.4vw,32px);
-      min-width:0;
-      display:flex;flex-direction:column;
-    }
-    .topbar{
-      display:flex;align-items:center;justify-content:space-between;
-      gap:12px;flex-wrap:wrap;margin-bottom:20px;
-    }
-    .page-title{font-size:24px;font-weight:800;color:var(--navy)}
-    .page-sub{color:var(--muted);font-size:14px;margin-top:4px}
-
-    /* ====== Views ====== */
-    .view{display:none}
-    .view.active{display:block;animation:fadeIn .25s ease}
-    @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
-
-    /* ====== Panel ====== */
-    .panel{
-      background:#fff;
-      border:1px solid var(--border);
-      border-radius:16px;
-      padding:20px;
-      box-shadow:0 4px 18px rgba(16,43,70,.06);
-      margin-bottom:16px;
-    }
-    .panel h2{font-size:19px;color:var(--navy);margin-bottom:14px}
-
-    /* ====== Loading ====== */
-    .loading{
-      display:flex;align-items:center;justify-content:center;
-      padding:40px;color:var(--muted);gap:12px;
-    }
-    .spinner{
-      width:20px;height:20px;
-      border:2.5px solid #cde7e5;
-      border-top-color:var(--teal);
-      border-radius:50%;
-      animation:spin .7s linear infinite;
-    }
-    @keyframes spin{to{transform:rotate(360deg)}}
-
-    /* ====== Notice ====== */
-    .notice{
-      display:none;
-      position:fixed;top:18px;left:50%;transform:translateX(-50%);
-      z-index:2000;width:min(540px,calc(100% - 28px));
-      padding:12px 14px;border-radius:14px;
-      font-weight:700;line-height:1.6;
-      box-shadow:0 14px 40px rgba(16,43,70,.18);
-      border:1px solid transparent;
-      backdrop-filter:blur(14px);
-    }
-    .notice.show{display:block;animation:noticeIn .18s ease-out}
-    @keyframes noticeIn{from{opacity:0;transform:translate(-50%,-8px)}to{opacity:1;transform:translate(-50%,0)}}
-    .notice.error{background:#fff0f1;color:#a52b39;border-color:#f4cbd0}
-    .notice.info{background:#eaf7f7;color:#066b70;border-color:#c6eeee}
-    .notice.success{background:#eafaf1;color:#0f7a4a;border-color:#c6eede}
-
-    /* ====== Mobile ====== */
-    @media (max-width:850px){
-      .shell{grid-template-columns:1fr}
-      aside{padding:14px}
-      .nav{grid-template-columns:1fr 1fr;display:grid}
-      .nav button{font-size:13px;padding:9px 11px}
-      .logout-btn{grid-column:1/-1}
-      main{padding:16px}
-    }
-
-    @media (prefers-reduced-motion:reduce){
-      *,*::before,*::after{animation:none!important;transition:none!important}
-    }
-    :focus-visible{outline:2px solid var(--teal);outline-offset:2px;border-radius:6px}
-    ::selection{background:var(--teal);color:#fff}
-  </style>
+  <link rel="stylesheet" href="./dashboard.css">
 </head>
 <body>
 
@@ -202,208 +28,378 @@
     <p class="sidebar-welcome" id="sidebarWelcome">جارٍ التحقق...</p>
 
     <nav class="nav" aria-label="القائمة الرئيسية">
-      <button class="active" data-view="overview">
-        <i class="fa-solid fa-chart-line"></i> نظرة عامة
-      </button>
-      <button data-view="students">
-        <i class="fa-solid fa-user-graduate"></i> الطلاب
-      </button>
-      <button data-view="groups">
-        <i class="fa-solid fa-layer-group"></i> الحلقات
-      </button>
-      <button data-view="teachers" id="navTeachers">
-        <i class="fa-solid fa-chalkboard-user"></i> المعلمون
-      </button>
-      <button data-view="attendance">
-        <i class="fa-solid fa-clipboard-check"></i> الحضور
-      </button>
-      <button data-view="reports">
-        <i class="fa-solid fa-chart-pie"></i> التقارير
-      </button>
+      <button class="active" data-view="overview"><i class="fa-solid fa-chart-line"></i> نظرة عامة</button>
+      <button data-view="students"><i class="fa-solid fa-user-graduate"></i> الطلاب</button>
+      <button data-view="groups" id="groupsNav"><i class="fa-solid fa-layer-group"></i> الحلقات</button>
+      <button data-view="teachers" id="navTeachers"><i class="fa-solid fa-chalkboard-user"></i> المعلمون</button>
+      <button data-view="attendanceReports"><i class="fa-solid fa-clipboard-check"></i> تقارير الحضور</button>
+      <button data-view="statistics" id="navStats"><i class="fa-solid fa-chart-pie"></i> الإحصائيات</button>
+      <button class="sidebar-logout" id="logoutBtn"><i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج</button>
     </nav>
 
-    <button class="logout-btn" id="logoutBtn">
-      <i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج
-    </button>
+    <p class="side-note">بوابة الإدارة<br>تظهر البيانات بحسب صلاحيات الحساب المسجّل.</p>
   </aside>
 
   <main>
-    <div class="topbar">
+    <header class="topbar">
       <div>
-        <h1 class="page-title" id="pageTitle">نظرة عامة</h1>
-        <p class="page-sub" id="pageSub">جارٍ تحميل البيانات...</p>
+        <h1 id="pageTitle">نظرة عامة</h1>
+        <p class="sub" id="pageSub">جارٍ تحميل البيانات...</p>
       </div>
+    </header>
+
+    <div id="notice" class="notice" role="status" aria-live="polite">
+      <span id="noticeText" class="notice-content"></span>
+      <button type="button" id="closeNotice" class="notice-close" aria-label="إغلاق الرسالة">×</button>
     </div>
 
-    <div class="notice" id="notice" role="status" aria-live="polite"></div>
-
-    <!-- نظرة عامة -->
-    <section class="view active" id="view-overview">
+    <!-- ===== نظرة عامة ===== -->
+    <section id="overviewView" class="view">
+      <div class="cards">
+        <div class="card"><div class="metric-label">إجمالي الطلاب</div><div class="metric" id="studentsCount">—</div></div>
+        <div class="card"><div class="metric-label">الحلقات</div><div class="metric" id="groupsCount">—</div></div>
+        <div class="card"><div class="metric-label">حسابات المعلمين</div><div class="metric" id="teachersCount">—</div></div>
+      </div>
       <div class="panel">
-        <div class="loading"><div class="spinner"></div> جارٍ التحميل...</div>
+        <div class="panel-head"><h2>مرحبًا بك في لوحة الإدارة</h2></div>
+        <p style="line-height:1.9;color:var(--muted)">هذه اللوحة تتيح إدارة الطلاب والحلقات وتتبع الحضور والتقارير. تظهر البيانات بحسب صلاحيات حسابك.</p>
       </div>
     </section>
 
-    <!-- الطلاب -->
-    <section class="view" id="view-students">
-      <div class="panel"><h2>الطلاب</h2><p style="color:var(--muted)">قيد الإنشاء — المرحلة 3</p></div>
+    <!-- ===== الطلاب ===== -->
+    <section id="studentsView" class="view hidden">
+      <div class="panel">
+        <div class="panel-head">
+          <div><h2>إدارة الطلاب</h2><p class="sub">تسجيل طالب جديد أو اختيار طالب لتعديله أو نقله أو حذفه.</p></div>
+        </div>
+        <div class="actions" style="margin-bottom:14px">
+          <button class="btn primary" id="openAddStudentModal" type="button"><i class="fa-solid fa-plus"></i> تسجيل طالب</button>
+          <button class="btn secondary" id="openManageStudentModal" type="button"><i class="fa-solid fa-pen"></i> تعديل طالب</button>
+          <button class="btn secondary" id="openTransferStudentModal" type="button"><i class="fa-solid fa-arrow-right-arrow-left"></i> نقل طالب</button>
+          <button class="btn danger" id="openDeleteStudentModal" type="button"><i class="fa-solid fa-trash"></i> حذف طالب</button>
+        </div>
+        <div class="tools">
+          <select id="studentGroupFilter" aria-label="اختر الحلقة">
+            <option value="">اختر الحلقة لعرض الطلاب</option>
+          </select>
+          <input id="studentSearch" placeholder="ابحث باسم الطالب" aria-label="البحث باسم الطالب">
+          <button class="btn secondary" id="searchStudents" type="button"><i class="fa-solid fa-magnifying-glass"></i> بحث</button>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="table-wrap">
+          <table style="min-width:900px">
+            <thead>
+              <tr>
+                <th>اسم الطالب</th><th>المواليد</th><th>محل الإقامة</th><th>رقم الهاتف</th>
+                <th>الجنس</th><th>الحلقة</th><th>نوع الحلقة</th><th>تاريخ التسجيل</th><th>الملاحظات</th>
+              </tr>
+            </thead>
+            <tbody id="studentsRows">
+              <tr><td colspan="9" class="empty">اختر الحلقة أو أدخل اسم الطالب للبحث.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </section>
 
-    <!-- الحلقات -->
-    <section class="view" id="view-groups">
-      <div class="panel"><h2>الحلقات</h2><p style="color:var(--muted)">قيد الإنشاء — المرحلة 4</p></div>
+    <!-- ===== الحلقات ===== -->
+    <section id="groupsView" class="view hidden">
+      <div class="panel" id="groupsListPanel">
+        <div class="panel-head">
+          <div><h2>الحلقات</h2><p class="sub">اختر الحلقة لفتح تفاصيلها وقائمة طلابها.</p></div>
+          <div class="actions">
+            <span class="group-count" id="visibleGroupsCount">— حلقة</span>
+            <button class="btn primary" id="openCreateGroupModal" type="button"><i class="fa-solid fa-plus"></i> إضافة حلقة</button>
+          </div>
+        </div>
+        <div class="groups-grid" id="groupsRows"><div class="empty">جارٍ تحميل الحلقات...</div></div>
+      </div>
+
+      <section id="groupDetailView" class="hidden">
+        <div class="panel group-detail-panel">
+          <div class="panel-head">
+            <div>
+              <button type="button" class="btn secondary group-back-btn" id="backToGroups">← العودة للحلقات</button>
+              <h2 id="groupDetailName">طلاب الحلقة</h2>
+              <p class="sub" id="groupDetailSubtitle">جارٍ التحميل...</p>
+            </div>
+            <input id="groupStudentSearch" class="group-student-search" type="search" placeholder="بحث باسم الطالب" aria-label="بحث في طلاب الحلقة">
+          </div>
+          <div class="table-wrap">
+            <table class="group-students-table">
+              <thead><tr><th style="width:60px">#</th><th>اسم الطالب</th><th>المواليد</th><th>محل الإقامة</th><th>رقم الهاتف</th></tr></thead>
+              <tbody id="groupStudentsRows"><tr><td colspan="5" class="empty">جارٍ التحميل...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="panel" id="attendancePanel">
+          <div class="panel-head">
+            <div><h2>الحضور والغياب</h2><p class="sub">سجّل حالة كل طالب ثم احفظ الحضور.</p></div>
+          </div>
+          <div class="attendance-toolbar">
+            <div class="field"><label for="attendanceDate">تاريخ الحضور</label><input id="attendanceDate" type="date"></div>
+            <button class="btn secondary" type="button" id="loadAttendanceBtn"><i class="fa-solid fa-rotate"></i> عرض سجل اليوم</button>
+            <button class="btn primary" type="button" id="saveAttendanceBtn"><i class="fa-solid fa-floppy-disk"></i> حفظ الحضور</button>
+            <div class="field" style="min-width:150px"><label for="attendanceExportMonth">شهر التصدير</label><input id="attendanceExportMonth" type="month"></div>
+            <button class="btn secondary" type="button" id="exportMonthlyAttendanceBtn"><i class="fa-solid fa-file-excel"></i> تصدير CSV</button>
+            <button class="btn danger hidden" type="button" id="resetMonthlyAttendanceBtn"><i class="fa-solid fa-eraser"></i> تصفير الشهر</button>
+          </div>
+          <div class="attendance-help">اختر التاريخ، ثم حدّد لكل طالب: حاضر أو غائب أو غياب بعذر.</div>
+          <div class="table-wrap" style="margin-top:14px">
+            <table class="attendance-table">
+              <thead><tr><th style="width:64px">#</th><th>اسم الطالب</th><th style="width:150px">الحالة</th><th>الإنجازات</th><th>ملاحظات</th></tr></thead>
+              <tbody id="attendanceRows"><tr><td colspan="5" class="empty">جارٍ التحميل...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
     </section>
 
-    <!-- المعلمون -->
-    <section class="view" id="view-teachers">
-      <div class="panel"><h2>المعلمون</h2><p style="color:var(--muted)">قيد الإنشاء — المرحلة 5</p></div>
+    <!-- ===== المعلمون ===== -->
+    <section id="teachersView" class="view hidden">
+      <div class="panel">
+        <div class="panel-head">
+          <div><h2>إدارة المعلمين</h2><p class="sub">تفعيل أو تعطيل حسابات المعلمين. (إنشاء حساب جديد يتم من Supabase Dashboard)</p></div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>اسم المعلم</th><th>البريد الإلكتروني</th><th>الحالة</th><th>إجراءات</th></tr></thead>
+            <tbody id="teachersRows"><tr><td colspan="4" class="empty">جارٍ التحميل...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
     </section>
 
-    <!-- الحضور -->
-    <section class="view" id="view-attendance">
-      <div class="panel"><h2>الحضور</h2><p style="color:var(--muted)">قيد الإنشاء — المرحلة 5</p></div>
+    <!-- ===== تقارير الحضور ===== -->
+    <section id="attendanceReportsView" class="view hidden">
+      <div class="cards">
+        <div class="card"><div class="metric-label">سجلات الحضور</div><div class="metric" id="reportPresentCount">—</div></div>
+        <div class="card"><div class="metric-label">سجلات الغياب</div><div class="metric" id="reportAbsentCount">—</div></div>
+        <div class="card"><div class="metric-label">غياب بعذر</div><div class="metric" id="reportExcusedCount">—</div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><div><h2>تقارير الحضور والغياب</h2><p class="sub">اختر فترة زمنية وحلقة لعرض السجلات.</p></div></div>
+        <div class="form-grid">
+          <div class="field"><label for="reportStartDate">من تاريخ</label><input type="date" id="reportStartDate"></div>
+          <div class="field"><label for="reportEndDate">إلى تاريخ</label><input type="date" id="reportEndDate"></div>
+          <div class="field"><label for="reportGroupFilter">الحلقة</label><select id="reportGroupFilter"><option value="">كل الحلقات</option></select></div>
+          <div class="field"><label for="reportStudentSearch">اسم الطالب</label><input id="reportStudentSearch" placeholder="ابحث باسم الطالب"></div>
+          <div class="field"><label for="reportStatusFilter">الحالة</label><select id="reportStatusFilter"><option value="">كل الحالات</option><option value="present">حاضر</option><option value="absent">غائب</option><option value="excused">غائب بعذر</option></select></div>
+        </div>
+        <div class="actions" style="margin-top:14px">
+          <button class="btn primary" type="button" id="runAttendanceReport">عرض التقرير</button>
+          <button class="btn secondary" type="button" id="resetAttendanceReport">إعادة ضبط</button>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h2>النتائج</h2><span class="group-count" id="attendanceReportRowsCount">0 سجل</span></div>
+        <div class="table-wrap">
+          <table style="min-width:760px">
+            <thead><tr><th>التاريخ</th><th>اسم الطالب</th><th>الحلقة</th><th>الحالة</th><th>الإنجازات</th><th>ملاحظات</th></tr></thead>
+            <tbody id="attendanceReportRows"><tr><td colspan="6" class="empty">اختر الفترة ثم اضغط «عرض التقرير».</td></tr></tbody>
+          </table>
+        </div>
+      </div>
     </section>
 
-    <!-- التقارير -->
-    <section class="view" id="view-reports">
-      <div class="panel"><h2>التقارير</h2><p style="color:var(--muted)">قيد الإنشاء — المرحلة 6</p></div>
+    <!-- ===== الإحصائيات ===== -->
+    <section id="statisticsView" class="view hidden">
+      <div class="cards">
+        <div class="card"><div class="metric-label">إجمالي الطلاب</div><div class="metric" id="statsStudentsCount">—</div></div>
+        <div class="card"><div class="metric-label">الذكور</div><div class="metric" id="statsBoysCount">—</div></div>
+        <div class="card"><div class="metric-label">الإناث</div><div class="metric" id="statsGirlsCount">—</div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h2>إحصائيات المعلمين والحلقات</h2><button class="btn secondary" id="refreshStatsBtn" type="button">تحديث</button></div>
+        <div class="table-wrap">
+          <table style="min-width:850px">
+            <thead><tr><th>المعلم</th><th>الحلقة</th><th>إجمالي</th><th>ذكور</th><th>إناث</th><th>ملاحظات</th></tr></thead>
+            <tbody id="statisticsRows"><tr><td colspan="6" class="empty">جارٍ التحميل...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
     </section>
 
+    <p class="footer">❴ أكاديمية تزكّى • للتعليم والتدريب والإرشاد ❵</p>
   </main>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-  // ====== إعدادات ======
-  const SUPABASE_URL = "https://zncfwhytbcsacxyxyqls.supabase.co";
-  const SUPABASE_KEY = "ضع_المفتاح_الكامل_هنا";
+<!-- ============ Modals ============ -->
 
-  const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-  let currentProfile = null;
-
-  // ====== Helpers ======
-  const $ = id => document.getElementById(id);
-
-  function showMessage(text, type = "info") {
-    const n = $("notice");
-    n.textContent = text;
-    n.className = "notice show " + type;
-    n.setAttribute("role", type === "error" ? "alert" : "status");
-    n.setAttribute("aria-live", type === "error" ? "assertive" : "polite");
-    clearTimeout(showMessage._t);
-    showMessage._t = setTimeout(() => n.classList.remove("show"), 5000);
-  }
-
-  function setPageInfo(title, sub) {
-    $("pageTitle").textContent = title;
-    $("pageSub").textContent = sub || "";
-  }
-
-  function showView(viewId) {
-    document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
-    const target = $("view-" + viewId);
-    if (target) target.classList.add("active");
-    document.querySelectorAll(".nav button").forEach(b => {
-      b.classList.toggle("active", b.dataset.view === viewId);
-    });
-    const titles = {
-      overview: ["نظرة عامة", "ملخص سريع لأداء الأكاديمية"],
-      students: ["الطلاب", "إدارة بيانات الطلاب"],
-      groups:   ["الحلقات", "إدارة حلقات الأكاديمية"],
-      teachers: ["المعلمون", "إدارة حسابات المعلمين"],
-      attendance: ["الحضور", "تسجيل ومتابعة الحضور"],
-      reports:  ["التقارير", "تقارير وإحصائيات"],
-    };
-    const [t, s] = titles[viewId] || ["لوحة التحكم", ""];
-    setPageInfo(t, s);
-  }
-
-  // ====== التحقق من الجلسة والصلاحيات ======
-  async function requireProfile() {
-    const { data: { user }, error } = await db.auth.getUser();
-    if (error || !user) {
-      window.location.replace("./index.html");
-      return false;
-    }
-
-    const { data: profile, error: profileError } = await db
-      .from("profiles")
-      .select("role, is_active, full_name")
-      .eq("id", user.id)
-      .maybeSingle();
-
-    if (profileError || !profile || !profile.is_active ||
-        !["manager", "teacher"].includes(profile.role)) {
-      await db.auth.signOut();
-      window.location.replace("./index.html");
-      return false;
-    }
-
-    currentProfile = { ...profile, id: user.id, email: user.email };
-
-    const welcome = `مرحبًا ${profile.full_name || user.email}`;
-    $("sidebarWelcome").textContent = welcome;
-
-    // إخفاء أقسام غير متاحة للمعلم
-    if (profile.role === "teacher") {
-      $("navTeachers").style.display = "none";
-    }
-
-    return true;
-  }
-
-  // ====== تحميل النظرة العامة ======
-  async function loadOverview() {
-    const overview = $("view-overview");
-    overview.innerHTML = `
-      <div class="panel">
-        <h2>مرحبًا بك</h2>
-        <p style="color:var(--muted);line-height:1.8">
-          تم تسجيل الدخول بنجاح كـ
-          <strong>${currentProfile.role === "manager" ? "مدير" : "معلم"}</strong>.
-        </p>
-        <p style="color:var(--muted);line-height:1.8;margin-top:10px">
-          الأقسام الكاملة قيد البناء. في المراحل القادمة سنضيف:
-        </p>
-        <ul style="margin-top:10px;padding-right:20px;color:var(--muted);line-height:2">
-          <li>عرض وإدارة الطلاب</li>
-          <li>إدارة الحلقات والحضور</li>
-          <li>تقارير وإحصائيات</li>
-        </ul>
+<!-- نافذة إضافة طالب -->
+<div id="addStudentBackdrop" class="modal-backdrop hidden" aria-hidden="true">
+  <section class="edit-modal" role="dialog" aria-modal="true" aria-labelledby="addStudentModalTitle">
+    <header class="modal-head">
+      <div><h2 id="addStudentModalTitle">تسجيل طالب جديد</h2><p>أدخل بيانات الطالب ثم اضغط حفظ.</p></div>
+      <button type="button" class="modal-close" id="closeAddStudentModal" aria-label="إغلاق">×</button>
+    </header>
+    <form id="addStudentForm">
+      <div class="modal-body">
+        <div class="modal-grid">
+          <div class="modal-field"><label for="newStudentName">اسم الطالب *</label><input id="newStudentName" required maxlength="150" placeholder="اسم الطالب"></div>
+          <div class="modal-field"><label for="newStudentGender">الجنس</label><select id="newStudentGender"><option value="">غير محدد</option><option value="male">ذكر</option><option value="female">أنثى</option></select></div>
+          <div class="modal-field"><label for="newStudentBirthDate">المواليد</label><input id="newStudentBirthDate" type="date"></div>
+          <div class="modal-field"><label for="newStudentResidence">محل الإقامة</label><input id="newStudentResidence" maxlength="250"></div>
+          <div class="modal-field"><label for="newStudentPhone">رقم الهاتف</label><input id="newStudentPhone" type="tel" maxlength="30" inputmode="tel"></div>
+          <div class="modal-field"><label for="newStudentGroup">الحلقة</label><select id="newStudentGroup"><option value="">بدون حلقة</option></select></div>
+          <div class="modal-field"><label for="newStudentGroupType">نوع الحلقة</label><input id="newStudentGroupType" maxlength="120"></div>
+          <div class="modal-field"><label for="newStudentRegistrationDate">تاريخ التسجيل</label><input id="newStudentRegistrationDate" type="date"></div>
+          <div class="modal-field wide"><label for="newStudentNotes">ملاحظات</label><textarea id="newStudentNotes" rows="2" maxlength="3000"></textarea></div>
+        </div>
       </div>
-    `;
-  }
+      <footer class="modal-foot">
+        <div class="save-state">يمكنك مراجعة البيانات قبل الحفظ.</div>
+        <div class="actions">
+          <button type="button" class="btn secondary" id="cancelAddStudentModal">إلغاء</button>
+          <button type="submit" class="btn primary" id="addStudentBtn">حفظ الطالب</button>
+        </div>
+      </footer>
+    </form>
+  </section>
+</div>
 
-  // ====== تسجيل الخروج ======
-  $("logoutBtn").addEventListener("click", async () => {
-    await db.auth.signOut();
-    window.location.replace("./index.html");
-  });
+<!-- نافذة إدارة الطالب -->
+<div id="studentManageBackdrop" class="modal-backdrop hidden" aria-hidden="true">
+  <section class="edit-modal" role="dialog" aria-modal="true" aria-labelledby="studentManageTitle">
+    <header class="modal-head">
+      <div><h2 id="studentManageTitle">إدارة الطالب</h2><p>اختر الحلقة والطالب ثم الإجراء.</p></div>
+      <button type="button" class="modal-close" id="closeStudentManageModal" aria-label="إغلاق">×</button>
+    </header>
+    <div class="modal-body">
+      <div class="modal-grid">
+        <div class="modal-field"><label for="manageStudentGroup">الحلقة</label><select id="manageStudentGroup"><option value="">كل الحلقات</option></select></div>
+        <div class="modal-field"><label for="manageStudentSelect">الطالب</label><select id="manageStudentSelect"><option value="">اختر الطالب</option></select></div>
+      </div>
+      <p id="manageStudentStatus" class="modal-hint" style="margin-top:10px">اختر الحلقة ثم الطالب.</p>
+      <div class="actions" style="margin-top:14px">
+        <button type="button" class="btn primary" id="manageEditStudent">✎ تعديل</button>
+        <button type="button" class="btn danger" id="manageDeleteStudent">حذف</button>
+      </div>
+    </div>
+    <footer class="modal-foot">
+      <div class="save-state">سيتم التحقق من صلاحيات الحساب.</div>
+      <div class="actions"><button type="button" class="btn secondary" id="cancelStudentManageModal">إغلاق</button></div>
+    </footer>
+  </section>
+</div>
 
-  // ====== التنقل ======
-  document.querySelectorAll(".nav button").forEach(btn => {
-    btn.addEventListener("click", () => showView(btn.dataset.view));
-  });
+<!-- نافذة تعديل طالب -->
+<div id="studentEditBackdrop" class="modal-backdrop hidden" aria-hidden="true">
+  <section class="edit-modal" role="dialog" aria-modal="true" aria-labelledby="editModalTitle">
+    <header class="modal-head">
+      <div><h2 id="editModalTitle">تعديل بيانات الطالب</h2><p>حدّث البيانات ثم احفظ.</p></div>
+      <button type="button" class="modal-close" id="closeStudentModal" aria-label="إغلاق">×</button>
+    </header>
+    <form id="studentEditForm">
+      <div class="modal-body">
+        <input type="hidden" id="editingStudentId">
+        <div class="modal-grid">
+          <div class="modal-field"><label for="editStudentName">اسم الطالب *</label><input id="editStudentName" required maxlength="150"></div>
+          <div class="modal-field"><label for="editStudentGender">الجنس</label><select id="editStudentGender"><option value="">غير محدد</option><option value="male">ذكر</option><option value="female">أنثى</option></select></div>
+          <div class="modal-field"><label for="editStudentBirthDate">المواليد</label><input id="editStudentBirthDate" type="date"></div>
+          <div class="modal-field"><label for="editStudentResidence">محل الإقامة</label><input id="editStudentResidence" maxlength="250"></div>
+          <div class="modal-field"><label for="editStudentPhone">الهاتف</label><input id="editStudentPhone" type="tel" maxlength="30"></div>
+          <div class="modal-field"><label for="editStudentGroup">الحلقة</label><select id="editStudentGroup"><option value="">بدون حلقة</option></select></div>
+          <div class="modal-field wide"><label for="editStudentNotes">الملاحظات</label><textarea id="editStudentNotes" maxlength="3000"></textarea></div>
+        </div>
+        <div id="studentEditStatus" class="modal-hint" style="margin-top:10px"></div>
+      </div>
+      <footer class="modal-foot">
+        <div class="save-state" id="studentSaveState">راجع البيانات قبل الحفظ.</div>
+        <div class="actions">
+          <button type="button" class="btn secondary" id="cancelStudentModal">إلغاء</button>
+          <button type="submit" class="btn primary" id="saveStudentChanges">حفظ</button>
+        </div>
+      </footer>
+    </form>
+  </section>
+</div>
 
-  // ====== التهيئة ======
-  (async function init() {
-    const ok = await requireProfile();
-    if (!ok) return;
+<!-- نافذة نقل طالب -->
+<div id="transferStudentBackdrop" class="modal-backdrop hidden" aria-hidden="true">
+  <section class="edit-modal" role="dialog" aria-modal="true" aria-labelledby="transferStudentTitle">
+    <header class="modal-head">
+      <div><h2 id="transferStudentTitle">نقل طالب بين الحلقات</h2><p>اختر الحلقة الحالية والطالب والحلقة الجديدة.</p></div>
+      <button type="button" class="modal-close" id="closeTransferStudentModal" aria-label="إغلاق">×</button>
+    </header>
+    <form id="transferStudentForm">
+      <div class="modal-body">
+        <div class="modal-grid">
+          <div class="modal-field"><label for="transferFromGroup">الحلقة الحالية *</label><select id="transferFromGroup" required><option value="">اختر</option><option value="__unassigned__">بدون حلقة</option></select></div>
+          <div class="modal-field"><label for="transferStudentSelect">الطالب *</label><select id="transferStudentSelect" required disabled><option value="">اختر الحلقة أولاً</option></select></div>
+          <div class="modal-field wide"><label for="transferToGroup">الحلقة الجديدة *</label><select id="transferToGroup" required><option value="">اختر</option></select></div>
+        </div>
+        <p id="transferStudentStatus" class="modal-hint" style="margin-top:10px">سيتم تغيير الحلقة المرتبطة بالطالب فقط.</p>
+      </div>
+      <footer class="modal-foot">
+        <div class="save-state">راجع قبل التأكيد.</div>
+        <div class="actions">
+          <button type="button" class="btn secondary" id="cancelTransferStudentModal">إلغاء</button>
+          <button type="submit" class="btn primary" id="saveTransferStudentBtn">تأكيد النقل</button>
+        </div>
+      </footer>
+    </form>
+  </section>
+</div>
 
-    await loadOverview();
+<!-- نافذة إضافة حلقة -->
+<div id="createGroupBackdrop" class="modal-backdrop hidden" aria-hidden="true">
+  <section class="edit-modal" role="dialog" aria-modal="true" aria-labelledby="createGroupModalTitle">
+    <header class="modal-head">
+      <div><h2 id="createGroupModalTitle">إضافة حلقة جديدة</h2><p>أدخل اسم الحلقة ونوعها.</p></div>
+      <button type="button" class="modal-close" id="closeCreateGroupModal" aria-label="إغلاق">×</button>
+    </header>
+    <form id="createGroupForm">
+      <div class="modal-body">
+        <div class="modal-grid">
+          <div class="modal-field"><label for="newGroupName">اسم الحلقة *</label><input id="newGroupName" required maxlength="150"></div>
+          <div class="modal-field"><label for="newGroupType">نوع الحلقة *</label><input id="newGroupType" required maxlength="120" placeholder="تحفيظ، تجويد، تعليمية..."></div>
+          <div class="modal-field" id="newGroupTeacherField"><label for="newGroupTeacher">المعلم المسؤول *</label><select id="newGroupTeacher"><option value="">جارٍ التحميل...</option></select></div>
+          <div class="modal-field"><label for="newGroupLogo">رابط شعار (اختياري)</label><input id="newGroupLogo" type="url" maxlength="1000" placeholder="https://..."></div>
+        </div>
+      </div>
+      <footer class="modal-foot">
+        <div class="save-state">يمكنك ترك الشعار فارغًا.</div>
+        <div class="actions">
+          <button type="button" class="btn secondary" id="cancelCreateGroupModal">إلغاء</button>
+          <button type="submit" class="btn primary" id="createGroupBtn">إنشاء الحلقة</button>
+        </div>
+      </footer>
+    </form>
+  </section>
+</div>
 
-    // مراقبة تغيير الجلسة
-    db.auth.onAuthStateChange((event) => {
-      if (event === "SIGNED_OUT") {
-        window.location.replace("./index.html");
-      }
-    });
-  })().catch(err => {
-    console.error(err);
-    showMessage("تعذر تحميل اللوحة: " + (err?.message || "خطأ غير معروف"), "error");
-  });
-</script>
+<!-- نافذة تعديل حلقة -->
+<div id="editGroupBackdrop" class="modal-backdrop hidden" aria-hidden="true">
+  <section class="edit-modal" role="dialog" aria-modal="true" aria-labelledby="editGroupTitle">
+    <header class="modal-head">
+      <div><h2 id="editGroupTitle">تعديل الحلقة</h2><p>عدّل الاسم والنوع والصورة.</p></div>
+      <button type="button" class="modal-close" id="closeEditGroupModal" aria-label="إغلاق">×</button>
+    </header>
+    <form id="editGroupForm">
+      <div class="modal-body">
+        <input type="hidden" id="editingGroupId">
+        <div class="modal-grid">
+          <div class="modal-field"><label for="editGroupName">اسم الحلقة *</label><input id="editGroupName" required maxlength="150"></div>
+          <div class="modal-field"><label for="editGroupType">نوع الحلقة *</label><input id="editGroupType" required maxlength="120"></div>
+          <div class="modal-field wide"><label for="editGroupLogo">رابط شعار (اختياري)</label><input id="editGroupLogo" type="url" maxlength="1000" placeholder="https://..."></div>
+        </div>
+        <p id="editGroupStatus" class="modal-hint" style="margin-top:10px"></p>
+      </div>
+      <footer class="modal-foot">
+        <div class="save-state">احفظ بعد المراجعة.</div>
+        <div class="actions">
+          <button type="button" class="btn secondary" id="cancelEditGroupModal">إلغاء</button>
+          <button type="submit" class="btn primary" id="saveEditGroupBtn">حفظ</button>
+        </div>
+      </footer>
+    </form>
+  </section>
+</div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="./dashboard.js"></script>
 </body>
 </html>
