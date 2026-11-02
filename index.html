@@ -2,92 +2,747 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#10283f">
+  <meta name="description" content="تسجيل الدخول إلى بوابة أكاديمية تزكى الإدارية">
   <title>تسجيل الدخول | أكاديمية تزكى</title>
+
+  <link rel="icon" href="/favicon.ico" sizes="any">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
   <style>
-    *{box-sizing:border-box;margin:0;padding:0}
-    body{
-      font-family:"Tajawal",sans-serif;
-      min-height:100vh;display:grid;place-items:center;
-      background:linear-gradient(135deg,#102b46,#075c68);
-      padding:20px;
+    :root {
+      --navy: #10283f;
+      --navy-light: #183a55;
+      --teal: #078b91;
+      --teal-dark: #06757b;
+      --gold: #d5ad62;
+      --white: #fff;
+      --text: #19334b;
+      --muted: #8190a3;
+      --border: #dce4ed;
+      --danger: #c94350;
+      --shadow: 0 18px 55px rgba(9, 30, 50, .22);
     }
-    .card{
-      width:min(400px,100%);background:#fff;border-radius:20px;
-      padding:32px 28px;box-shadow:0 30px 80px rgba(0,0,0,.3);
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { min-height: 100%; }
+    body {
+      min-height: 100vh;
+      font-family: "Tajawal", sans-serif;
+      background: var(--navy);
+      color: var(--text);
     }
-    h1{color:#102b46;font-size:24px;margin-bottom:6px;text-align:center}
-    .sub{color:#6d8195;font-size:14px;text-align:center;margin-bottom:24px}
-    label{display:block;font-weight:700;color:#29465f;margin-bottom:6px;font-size:14px}
-    input{
-      width:100%;padding:12px 14px;border:1px solid #dce6ef;border-radius:10px;
-      font-family:inherit;font-size:15px;margin-bottom:16px;
+    button, input { font: inherit; }
+    button, a { -webkit-tap-highlight-color: transparent; }
+    button { cursor: pointer; }
+    a { text-decoration: none; }
+
+    .login-page {
+      min-height: 100vh;
+      min-height: 100svh;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      align-items: center;
+      gap: clamp(20px, 4vw, 64px);
+      padding: 24px clamp(24px, 5vw, 80px);
+      position: relative;
+      isolation: isolate;
+      overflow: hidden;
+      background:
+        linear-gradient(115deg, rgba(8, 29, 48, .80), rgba(12, 43, 62, .75)),
+        url("https://i.imgur.com/JxVjnIo.jpg") center / cover no-repeat;
     }
-    input:focus{outline:none;border-color:#078f91;box-shadow:0 0 0 3px #078f911c}
-    button{
-      width:100%;padding:13px;border:0;border-radius:10px;
-      background:linear-gradient(135deg,#0b9b9a,#08777f);color:#fff;
-      font-family:inherit;font-size:16px;font-weight:800;cursor:pointer;
-      transition:transform .15s;
+    .login-page::before {
+      content: "";
+      position: absolute;
+      z-index: -1;
+      width: 430px; height: 430px;
+      border: 1px solid rgba(213, 173, 98, .23);
+      border-radius: 50%;
+      top: -300px; right: -140px;
+      pointer-events: none;
     }
-    button:hover:not(:disabled){transform:translateY(-1px)}
-    button:disabled{opacity:.6;cursor:not-allowed}
-    .msg{
-      margin-top:14px;padding:10px 12px;border-radius:9px;font-size:14px;
-      display:none;line-height:1.6;
+    .login-page::after {
+      content: "";
+      position: absolute;
+      z-index: -1;
+      width: 320px; height: 320px;
+      border: 1px solid rgba(7, 139, 145, .3);
+      border-radius: 50%;
+      bottom: -240px; left: -80px;
+      pointer-events: none;
     }
-    .msg.show{display:block}
-    .msg.error{background:#fff0f1;color:#a52b39}
-    .msg.info{background:#eaf7f7;color:#066b70}
+
+    .form-section {
+      grid-column: 1; grid-row: 1;
+      display: flex; align-items: center; justify-content: center;
+      min-width: 0;
+      animation: appear .65s ease both;
+    }
+    .login-card {
+      width: 100%;
+      max-width: 480px;
+      padding: clamp(25px, 3vh, 35px) clamp(24px, 3vw, 38px) 22px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, .98);
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(255, 255, 255, .7);
+      position: relative;
+      overflow: hidden;
+    }
+    .login-card::before {
+      content: "";
+      position: absolute;
+      top: 0; right: 0; left: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--teal), var(--gold));
+    }
+    .welcome-title {
+      color: var(--navy);
+      font-size: clamp(25px, 2.2vw, 32px);
+      line-height: 1.4;
+      font-weight: 800;
+      text-align: center;
+    }
+    .welcome-description {
+      margin-top: 7px;
+      text-align: center;
+      font-size: 15px;
+      line-height: 1.7;
+      color: #75849a;
+    }
+    .section-divider {
+      width: 90px; height: 4px;
+      margin: 18px auto 25px;
+      border-radius: 5px;
+      background: linear-gradient(90deg, var(--teal) 50%, var(--gold) 50%);
+    }
+
+    .form-group { margin-bottom: 18px; }
+    .form-label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--navy);
+    }
+    .input-wrapper {
+      display: flex;
+      align-items: center;
+      min-height: 55px;
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      background: #fff;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .input-wrapper:focus-within {
+      border-color: var(--teal);
+      box-shadow: 0 0 0 3px rgba(7, 139, 145, .09);
+    }
+    .input-icon {
+      width: 48px;
+      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--teal);
+      font-size: 19px;
+    }
+    .input-wrapper input {
+      min-width: 0;
+      flex: 1;
+      height: 53px;
+      border: none;
+      outline: none;
+      background: transparent;
+      color: var(--text);
+      font-size: 15px;
+      padding: 0 4px;
+    }
+    .input-wrapper input::placeholder { color: #9aa7b8; }
+    .password-toggle {
+      width: 43px; height: 43px;
+      flex-shrink: 0;
+      border: none;
+      background: transparent;
+      border-radius: 10px;
+      color: #7e8ca0;
+      font-size: 17px;
+    }
+    .password-toggle:hover { color: var(--teal); }
+
+    .form-options {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 2px 0 22px;
+      font-size: 14px;
+    }
+    .remember-option {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--navy);
+      cursor: pointer;
+      user-select: none;
+    }
+    .remember-option input {
+      appearance: none;
+      width: 20px; height: 20px;
+      border: 1.5px solid #a9b7c7;
+      border-radius: 5px;
+      background: white;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+    }
+    .remember-option input:checked {
+      background: var(--teal);
+      border-color: var(--teal);
+    }
+    .remember-option input:checked::after {
+      content: "\f00c";
+      font-family: "Font Awesome 6 Free";
+      font-weight: 900;
+      font-size: 11px;
+      color: white;
+    }
+    .forgot-link {
+      color: var(--teal-dark);
+      font-weight: 600;
+    }
+    .forgot-link:hover { text-decoration: underline; }
+    .forgot-link[aria-disabled="true"] {
+      opacity: .55;
+      pointer-events: none;
+    }
+
+    .login-button {
+      width: 100%;
+      min-height: 57px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      position: relative;
+      border: none;
+      border-radius: 12px;
+      color: white;
+      background: linear-gradient(110deg, var(--teal-dark), var(--teal));
+      box-shadow: 0 8px 18px rgba(7, 139, 145, .18);
+      font-size: 19px;
+      font-weight: 700;
+      transition: transform .2s, box-shadow .2s;
+    }
+    .login-button::before {
+      content: "";
+      position: absolute;
+      top: 0; right: 0; left: 0;
+      height: 2px;
+      background: var(--gold);
+      border-radius: 12px 12px 0 0;
+    }
+    .login-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 24px rgba(7, 139, 145, .25);
+    }
+    .login-button:active { transform: translateY(0); }
+    .login-button:disabled { cursor: not-allowed; opacity: .75; }
+
+    .status-message {
+      display: none;
+      margin-top: 14px;
+      padding: 11px 13px;
+      border-radius: 9px;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .status-message.visible { display: block; }
+    .status-message.error {
+      color: var(--danger);
+      background: #fff0f1;
+      border: 1px solid #f4d4d8;
+    }
+    .status-message.info {
+      color: var(--teal-dark);
+      background: #edf8f8;
+      border: 1px solid #d1ecec;
+    }
+
+    .card-footer {
+      margin-top: 25px;
+      padding-top: 17px;
+      border-top: 1px solid #e5eaf0;
+      text-align: center;
+    }
+    .security-note {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      color: #7c8da3;
+      font-size: 13px;
+    }
+    .security-note i { color: #c39b4d; font-size: 16px; }
+    .copyright {
+      margin-top: 12px;
+      font-size: 12px;
+      line-height: 1.7;
+      color: #8a98aa;
+    }
+
+    .brand-section {
+      grid-column: 2; grid-row: 1;
+      min-width: 0;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 24px;
+      animation: appear .7s .1s ease both;
+    }
+    .brand-content { width: 100%; max-width: 440px; }
+    .academy-logo {
+      width: 168px; height: 168px;
+      margin: 0 auto 12px;
+      display: block;
+      object-fit: contain;
+      border: 1px solid rgba(213, 173, 98, .85);
+      border-radius: 20px;
+      padding: 5px;
+      background: #ffffff;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, .16);
+      transition: transform .25s;
+    }
+    .academy-logo:hover { transform: translateY(-3px); }
+    .logo-note {
+      font-size: 12px;
+      color: rgba(255, 255, 255, .65);
+      margin-bottom: 14px;
+    }
+    .academy-name {
+      font-size: clamp(32px, 3.5vw, 47px);
+      line-height: 1.4;
+      font-weight: 800;
+    }
+    .academy-name span { color: var(--gold); }
+    .brand-line {
+      width: 125px; height: 4px;
+      border-radius: 5px;
+      margin: 17px auto;
+      background: linear-gradient(90deg, var(--teal), var(--gold));
+    }
+    .brand-description {
+      font-size: 18px;
+      line-height: 1.8;
+      color: rgba(255, 255, 255, .9);
+    }
+    .features {
+      display: flex;
+      justify-content: center;
+      align-items: stretch;
+      margin-top: 34px;
+    }
+    .feature {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 9px;
+      padding: 0 12px;
+      font-size: 14px;
+      color: rgba(255, 255, 255, .9);
+    }
+    .feature + .feature { border-right: 1px solid rgba(255, 255, 255, .17); }
+    .feature i { font-size: 22px; color: var(--gold); }
+
+    @keyframes appear {
+      from { opacity: 0; transform: translateY(9px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-height: 760px) and (min-width: 761px) {
+      .login-page { padding-top: 14px; padding-bottom: 14px; gap: 24px; }
+      .login-card { padding-top: 23px; padding-bottom: 16px; }
+      .section-divider { margin: 13px auto 18px; }
+      .form-group { margin-bottom: 13px; }
+      .input-wrapper, .input-wrapper input { min-height: 48px; height: 48px; }
+      .form-options { margin-bottom: 16px; }
+      .login-button { min-height: 50px; }
+      .card-footer { margin-top: 17px; padding-top: 12px; }
+      .copyright { margin-top: 7px; }
+      .academy-logo { width: 148px; height: 148px; }
+      .academy-name { font-size: 34px; }
+      .brand-line { margin: 12px auto; }
+      .features { margin-top: 23px; }
+    }
+
+    @media (max-width: 760px) {
+      .login-page {
+        grid-template-columns: 1fr;
+        gap: 0;
+        padding: 22px 16px 26px;
+        background-image:
+          linear-gradient(rgba(8, 29, 48, .87), rgba(8, 29, 48, .94)),
+          url("https://i.imgur.com/JxVjnIo.jpg");
+      }
+      .form-section { grid-column: 1; grid-row: 2; }
+      .brand-section { grid-column: 1; grid-row: 1; padding: 5px 8px 23px; }
+      .academy-logo { width: 124px; height: 124px; margin-bottom: 7px; border-radius: 14px; }
+      .logo-note { margin-bottom: 7px; font-size: 11px; }
+      .academy-name { font-size: 29px; }
+      .brand-line { margin: 9px auto; width: 90px; height: 3px; }
+      .brand-description { font-size: 14px; }
+      .features { margin-top: 17px; }
+      .feature { font-size: 12px; gap: 6px; padding: 0 8px; }
+      .feature i { font-size: 18px; }
+      .login-card { max-width: 480px; padding: 27px 22px 20px; border-radius: 17px; }
+      .welcome-title { font-size: 25px; }
+      .welcome-description { font-size: 14px; }
+      .section-divider { margin: 16px auto 21px; }
+      .form-group { margin-bottom: 16px; }
+      .input-wrapper { min-height: 51px; }
+      .input-wrapper input { height: 49px; }
+      .form-options { margin-bottom: 19px; }
+      .login-button { min-height: 53px; font-size: 18px; }
+      .card-footer { margin-top: 20px; }
+    }
+
+    @media (max-width: 360px) {
+      .login-card { padding-right: 16px; padding-left: 16px; }
+      .form-options { font-size: 13px; }
+      .academy-name { font-size: 26px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation: none !important;
+        transition: none !important;
+      }
+    }
+
+    :focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; border-radius: 6px; }
+    ::selection { background: var(--teal); color: #fff; }
   </style>
 </head>
+
 <body>
-  <form class="card" id="loginForm">
-    <h1>لوحة تحكم أكاديمية تزكى</h1>
-    <p class="sub">سجّل دخولك للمتابعة</p>
-    <label for="email">البريد الإلكتروني</label>
-    <input id="email" type="email" required autocomplete="email">
-    <label for="password">كلمة المرور</label>
-    <input id="password" type="password" required autocomplete="current-password">
-    <button type="submit" id="submitBtn">تسجيل الدخول</button>
-    <div class="msg" id="msg" role="alert"></div>
-  </form>
+
+  <main class="login-page">
+
+    <!-- بطاقة تسجيل الدخول: الجهة اليمنى -->
+    <section class="form-section" aria-label="تسجيل الدخول">
+      <div class="login-card">
+
+        <header>
+          <h1 class="welcome-title">مرحبًا بك في أكاديمية تزكى</h1>
+          <p class="welcome-description">قم بتسجيل الدخول للوصول إلى حسابك</p>
+          <div class="section-divider" aria-hidden="true"></div>
+        </header>
+
+        <form id="loginForm" novalidate>
+
+          <div class="form-group">
+            <label class="form-label" for="email">البريد الإلكتروني</label>
+            <div class="input-wrapper">
+              <span class="input-icon" aria-hidden="true">
+                <i class="fa-regular fa-user"></i>
+              </span>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                placeholder="أدخل البريد الإلكتروني"
+                autocomplete="username"
+                inputmode="email"
+                required
+              >
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="password">كلمة المرور</label>
+            <div class="input-wrapper">
+              <span class="input-icon" aria-hidden="true">
+                <i class="fa-solid fa-lock"></i>
+              </span>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                placeholder="أدخل كلمة المرور"
+                autocomplete="current-password"
+                required
+              >
+              <button
+                type="button"
+                class="password-toggle"
+                id="togglePassword"
+                aria-label="إظهار كلمة المرور"
+                aria-pressed="false"
+              >
+                <i class="fa-regular fa-eye" aria-hidden="true"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="form-options">
+            <label class="remember-option">
+              <input type="checkbox" id="rememberMe" checked>
+              <span>تذكرني</span>
+            </label>
+            <a href="#" class="forgot-link" id="forgotPassword">نسيت كلمة المرور؟</a>
+          </div>
+
+          <button type="submit" class="login-button" id="submitBtn">
+            <i class="fa-solid fa-arrow-right-to-bracket" aria-hidden="true"></i>
+            <span>تسجيل الدخول</span>
+          </button>
+
+          <div class="status-message" id="statusMessage" role="alert" aria-live="assertive"></div>
+
+        </form>
+
+        <footer class="card-footer">
+          <div class="security-note">
+            <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+            <span>بوابة أكاديمية تزكى الإدارية</span>
+          </div>
+          <p class="copyright">
+            جميع الحقوق محفوظة © <span id="currentYear"></span> أكاديمية تزكى
+          </p>
+        </footer>
+
+      </div>
+    </section>
+
+    <!-- هوية الأكاديمية: الجهة اليسرى -->
+    <section class="brand-section" aria-label="هوية الأكاديمية">
+      <div class="brand-content">
+
+        <img
+          src="https://i.imgur.com/gA6y80y.png"
+          alt="شعار أكاديمية تزكى"
+          class="academy-logo"
+          width="168"
+          height="168"
+          decoding="async"
+        >
+
+        <p class="logo-note"></p>
+
+        <h2 class="academy-name">أكاديمية <span>تزكى</span></h2>
+
+        <div class="brand-line" aria-hidden="true"></div>
+
+        <p class="brand-description">للتعليم و التدريب و الإرشاد</p>
+
+        <div class="features">
+          <div class="feature">
+            <i class="fa-solid fa-user-graduate" aria-hidden="true"></i>
+            <span>كادر متميّز</span>
+          </div>
+          <div class="feature">
+            <i class="fa-solid fa-book-open" aria-hidden="true"></i>
+            <span>تربية هادفة</span>
+          </div>
+          <div class="feature">
+            <i class="fa-solid fa-seedling" aria-hidden="true"></i>
+            <span>أثرٌ باقٍ</span>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    const SUPABASE_URL = "https://oojinjlzzqfqbcblgrsm.supabase.co/rest/v1/";
-    const SUPABASE_KEY = "sb_publishable_WKICV8R27c87HKTwU9qmkQ_6tiZmjin";
-    const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    // ====== إعدادات مشروعك الجديد ======
+    const SUPABASE_URL = "https://zncfwhytbcsacxyxyqls.supabase.co";
+    const SUPABASE_KEY = "ضع_المفتاح_الكامل_هنا";
 
-    // إذا كان مسجل الدخول بالفعل، انتقل مباشرة
-    db.auth.getSession().then(({data:{session}})=>{
-      if(session) window.location.replace("./dashboard.html");
+    const { createClient } = supabase;
+    const supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    const loginForm = document.getElementById("loginForm");
+    const emailInput = document.getElementById("email");
+    const passwordInput = document.getElementById("password");
+    const togglePassword = document.getElementById("togglePassword");
+    const forgotPassword = document.getElementById("forgotPassword");
+    const statusMessage = document.getElementById("statusMessage");
+    const submitButton = document.getElementById("submitBtn");
+    const submitLabel = submitButton.querySelector("span");
+
+    document.getElementById("currentYear").textContent = new Date().getFullYear();
+
+    // ====== إظهار/إخفاء كلمة المرور ======
+    togglePassword.addEventListener("click", function () {
+      const isHidden = passwordInput.type === "password";
+      passwordInput.type = isHidden ? "text" : "password";
+      togglePassword.innerHTML = isHidden
+        ? '<i class="fa-regular fa-eye-slash" aria-hidden="true"></i>'
+        : '<i class="fa-regular fa-eye" aria-hidden="true"></i>';
+      togglePassword.setAttribute("aria-label", isHidden ? "إخفاء كلمة المرور" : "إظهار كلمة المرور");
+      togglePassword.setAttribute("aria-pressed", String(isHidden));
     });
 
-    const form = document.getElementById("loginForm");
-    const btn = document.getElementById("submitBtn");
-    const msg = document.getElementById("msg");
-
-    function showMsg(text, type){
-      msg.textContent = text;
-      msg.className = "msg show " + type;
+    // ====== رسائل الحالة ======
+    function showMessage(text, type = "info") {
+      statusMessage.textContent = text;
+      statusMessage.className = "status-message visible " + type;
+    }
+    function clearMessage() {
+      statusMessage.textContent = "";
+      statusMessage.className = "status-message";
     }
 
-    form.addEventListener("submit", async (e)=>{
-      e.preventDefault();
-      btn.disabled = true; btn.textContent = "جارٍ الدخول...";
-      msg.className = "msg";
-      const {error} = await db.auth.signInWithPassword({
-        email: document.getElementById("email").value.trim(),
-        password: document.getElementById("password").value,
-      });
-      btn.disabled = false; btn.textContent = "تسجيل الدخول";
-      if(error){ showMsg("تعذر الدخول: " + error.message, "error"); return; }
-      window.location.replace("./dashboard.html");
+    // ====== وضع استعادة كلمة المرور ======
+    const passwordLabel = document.querySelector('label[for="password"]');
+    let isRecoveryMode = false;
+
+    function setRecoveryMode(enabled) {
+      isRecoveryMode = enabled;
+      clearMessage();
+      passwordInput.value = "";
+      passwordInput.autocomplete = enabled ? "new-password" : "current-password";
+      passwordInput.placeholder = enabled ? "أدخل كلمة المرور الجديدة (8 أحرف على الأقل)" : "أدخل كلمة المرور";
+      passwordInput.minLength = enabled ? 8 : 0;
+      passwordLabel.textContent = enabled ? "كلمة المرور الجديدة" : "كلمة المرور";
+      submitLabel.textContent = enabled ? "حفظ كلمة المرور" : "تسجيل الدخول";
+      forgotPassword.hidden = enabled;
+      if (enabled) {
+        showMessage("أنشئ كلمة مرور جديدة لا تقل عن 8 أحرف، ثم اضغط حفظ كلمة المرور.", "info");
+        passwordInput.focus();
+      }
+    }
+
+    supabaseClient.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY") setRecoveryMode(true);
+    });
+
+    emailInput.addEventListener("input", clearMessage);
+    passwordInput.addEventListener("input", clearMessage);
+
+    // ====== نسيت كلمة المرور ======
+    forgotPassword.addEventListener("click", async function (event) {
+      event.preventDefault();
+      clearMessage();
+
+      const email = emailInput.value.trim().toLowerCase();
+      if (!email) {
+        showMessage("أدخل بريدك الإلكتروني أولًا لاستعادة كلمة المرور.", "error");
+        emailInput.focus();
+        return;
+      }
+      if (!emailInput.checkValidity()) {
+        showMessage("يرجى إدخال بريد إلكتروني صحيح.", "error");
+        emailInput.focus();
+        return;
+      }
+
+      forgotPassword.setAttribute("aria-disabled", "true");
+      try {
+        const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+          redirectTo: window.location.origin + window.location.pathname
+        });
+        if (error) {
+          showMessage("تعذر إرسال رابط الاستعادة. تحقق من الإعدادات أو حاول مجددًا.", "error");
+        } else {
+          showMessage("إذا كان البريد مسجلًا، فستصلك رسالة لاستعادة كلمة المرور.", "info");
+        }
+      } catch {
+        showMessage("تعذر الاتصال بخدمة الاستعادة. تحقق من الإنترنت ثم حاول مجددًا.", "error");
+      } finally {
+        forgotPassword.removeAttribute("aria-disabled");
+      }
+    });
+
+    // ====== تسجيل الدخول ======
+    loginForm.addEventListener("submit", async function (event) {
+      event.preventDefault();
+      clearMessage();
+
+      const email = emailInput.value.trim().toLowerCase();
+      const password = passwordInput.value;
+
+      if (!isRecoveryMode && !email) {
+        showMessage("يرجى إدخال البريد الإلكتروني.", "error");
+        emailInput.focus();
+        return;
+      }
+      if (!isRecoveryMode && !emailInput.checkValidity()) {
+        showMessage("يرجى إدخال بريد إلكتروني صحيح.", "error");
+        emailInput.focus();
+        return;
+      }
+      if (!password) {
+        showMessage(isRecoveryMode ? "يرجى إدخال كلمة المرور الجديدة." : "يرجى إدخال كلمة المرور.", "error");
+        passwordInput.focus();
+        return;
+      }
+      if (isRecoveryMode && password.length < 8) {
+        showMessage("يجب ألا تقل كلمة المرور الجديدة عن 8 أحرف.", "error");
+        passwordInput.focus();
+        return;
+      }
+
+      submitButton.disabled = true;
+      submitLabel.textContent = isRecoveryMode ? "جارٍ حفظ كلمة المرور..." : "جارٍ التحقق...";
+
+      try {
+        if (isRecoveryMode) {
+          const { error } = await supabaseClient.auth.updateUser({ password });
+          if (error) {
+            showMessage("تعذر تحديث كلمة المرور. افتح أحدث رابط استعادة وصلك ثم حاول مجددًا.", "error");
+            return;
+          }
+          await supabaseClient.auth.signOut();
+          setRecoveryMode(false);
+          passwordInput.value = "";
+          showMessage("تم تغيير كلمة المرور بنجاح. يمكنك الآن تسجيل الدخول بها.", "info");
+          return;
+        }
+
+        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+        if (error) {
+          const map = {
+            "Invalid login credentials": "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
+            "Email not confirmed": "يرجى تأكيد بريدك الإلكتروني أولًا من رسالة التفعيل.",
+          };
+          showMessage(map[error.message] || ("تعذر تسجيل الدخول: " + error.message), "error");
+          return;
+        }
+
+        const { data: profile, error: profileError } = await supabaseClient
+          .from("profiles")
+          .select("role, is_active, full_name")
+          .eq("id", data.user.id)
+          .maybeSingle();
+
+        if (profileError || !profile || profile.is_active !== true ||
+            !["manager", "teacher"].includes(profile.role)) {
+          await supabaseClient.auth.signOut();
+          showMessage("هذا الحساب غير مفعّل أو لا يملك صلاحية الدخول. راجع مسؤول النظام.", "error");
+          return;
+        }
+
+        window.location.replace("./dashboard.html");
+      } catch {
+        showMessage("حدث خطأ في الاتصال. تحقق من الإنترنت ثم حاول مجددًا.", "error");
+      } finally {
+        submitButton.disabled = false;
+        submitLabel.textContent = isRecoveryMode ? "حفظ كلمة المرور" : "تسجيل الدخول";
+      }
     });
   </script>
+
 </body>
 </html>
