@@ -62,7 +62,7 @@
       </div>
       <div class="panel">
         <div class="panel-head"><h2>مرحبًا بك في لوحة الإدارة</h2></div>
-        <p style="line-height:1.9;color:var(--muted)">هذه اللوحة تتيح إدارة الطلاب والحلقات وتتبع الحضور والتقارير. تظهر البيانات بحسب صلاحيات حسابك.</p>
+        <p style="line-height:1.9">هذه اللوحة تتيح إدارة الطلاب والحلقات وتتبع الحضور والتقارير. تظهر البيانات بحسب صلاحيات حسابك.</p>
       </div>
     </section>
 
@@ -228,7 +228,7 @@
 
 <!-- ============ Modals ============ -->
 
-<!-- نافذة إضافة طالب -->
+<!-- إضافة طالب -->
 <div id="addStudentBackdrop" class="modal-backdrop hidden" aria-hidden="true">
   <section class="edit-modal" role="dialog" aria-modal="true" aria-labelledby="addStudentModalTitle">
     <header class="modal-head">
@@ -246,11 +246,11 @@
           <div class="modal-field"><label for="newStudentGroup">الحلقة</label><select id="newStudentGroup"><option value="">بدون حلقة</option></select></div>
           <div class="modal-field"><label for="newStudentGroupType">نوع الحلقة</label><input id="newStudentGroupType" maxlength="120"></div>
           <div class="modal-field"><label for="newStudentRegistrationDate">تاريخ التسجيل</label><input id="newStudentRegistrationDate" type="date"></div>
-          <div class="modal-field wide"><label for="newStudentNotes">ملاحظات</label><textarea id="newStudentNotes" rows="2" maxlength="3000"></textarea></div>
+          <div class="modal-field wide"><label for="newStudentNotes">ملاحظات</label><textarea id="newStudentNotes" rows="2" maxlength="3000" placeholder="ملاحظات عن الطالب (اختياري)"></textarea></div>
         </div>
       </div>
       <footer class="modal-foot">
-        <div class="save-state">يمكنك مراجعة البيانات قبل الحفظ.</div>
+        <div class="save-state">راجع البيانات قبل الحفظ.</div>
         <div class="actions">
           <button type="button" class="btn secondary" id="cancelAddStudentModal">إلغاء</button>
           <button type="submit" class="btn primary" id="addStudentBtn">حفظ الطالب</button>
@@ -260,7 +260,7 @@
   </section>
 </div>
 
-<!-- نافذة إدارة الطالب -->
+<!-- إدارة الطالب -->
 <div id="studentManageBackdrop" class="modal-backdrop hidden" aria-hidden="true">
   <section class="edit-modal" role="dialog" aria-modal="true" aria-labelledby="studentManageTitle">
     <header class="modal-head">
@@ -285,7 +285,7 @@
   </section>
 </div>
 
-<!-- نافذة تعديل طالب -->
+<!-- تعديل طالب -->
 <div id="studentEditBackdrop" class="modal-backdrop hidden" aria-hidden="true">
   <section class="edit-modal" role="dialog" aria-modal="true" aria-labelledby="editModalTitle">
     <header class="modal-head">
@@ -302,9 +302,9 @@
           <div class="modal-field"><label for="editStudentResidence">محل الإقامة</label><input id="editStudentResidence" maxlength="250"></div>
           <div class="modal-field"><label for="editStudentPhone">الهاتف</label><input id="editStudentPhone" type="tel" maxlength="30"></div>
           <div class="modal-field"><label for="editStudentGroup">الحلقة</label><select id="editStudentGroup"><option value="">بدون حلقة</option></select></div>
-          <div class="modal-field wide"><label for="editStudentNotes">الملاحظات</label><textarea id="editStudentNotes" maxlength="3000"></textarea></div>
+          <div class="modal-field wide"><label for="editStudentNotes">الملاحظات</label><textarea id="editStudentNotes" rows="2" maxlength="3000" placeholder="ملاحظات (اختياري)"></textarea></div>
         </div>
-        <div id="studentEditStatus" class="modal-hint" style="margin-top:10px"></div>
+        <div id="studentEditStatus" class="modal-hint" style="margin-top:8px"></div>
       </div>
       <footer class="modal-foot">
         <div class="save-state" id="studentSaveState">راجع البيانات قبل الحفظ.</div>
@@ -317,7 +317,7 @@
   </section>
 </div>
 
-<!-- نافذة نقل طالب -->
+<!-- نقل طالب -->
 <div id="transferStudentBackdrop" class="modal-backdrop hidden" aria-hidden="true">
   <section class="edit-modal" role="dialog" aria-modal="true" aria-labelledby="transferStudentTitle">
     <header class="modal-head">
@@ -331,7 +331,7 @@
           <div class="modal-field"><label for="transferStudentSelect">الطالب *</label><select id="transferStudentSelect" required disabled><option value="">اختر الحلقة أولاً</option></select></div>
           <div class="modal-field wide"><label for="transferToGroup">الحلقة الجديدة *</label><select id="transferToGroup" required><option value="">اختر</option></select></div>
         </div>
-        <p id="transferStudentStatus" class="modal-hint" style="margin-top:10px">سيتم تغيير الحلقة المرتبطة بالطالب فقط.</p>
+        <p id="transferStudentStatus" class="modal-hint" style="margin-top:8px">سيتم تغيير الحلقة المرتبطة بالطالب فقط.</p>
       </div>
       <footer class="modal-foot">
         <div class="save-state">راجع قبل التأكيد.</div>
@@ -344,7 +344,7 @@
   </section>
 </div>
 
-<!-- نافذة إضافة حلقة -->
+<!-- إضافة حلقة -->
 <div id="createGroupBackdrop" class="modal-backdrop hidden" aria-hidden="true">
   <section class="edit-modal" role="dialog" aria-modal="true" aria-labelledby="createGroupModalTitle">
     <header class="modal-head">
@@ -371,7 +371,7 @@
   </section>
 </div>
 
-<!-- نافذة تعديل حلقة -->
+<!-- تعديل حلقة -->
 <div id="editGroupBackdrop" class="modal-backdrop hidden" aria-hidden="true">
   <section class="edit-modal" role="dialog" aria-modal="true" aria-labelledby="editGroupTitle">
     <header class="modal-head">
