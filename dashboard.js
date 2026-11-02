@@ -2,7 +2,7 @@
 // إعدادات Supabase
 // =====================================================
 const SUPABASE_URL = "https://zncfwhytbcsacxyxyqls.supabase.co";
-const SUPABASE_KEY = "ضع_المفتاح_الكامل_هنا";
+const SUPABASE_KEY = "sb_publishable_WKICV8R27c87HKTwU9qmkQ_6tiZmjin";
 
 const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const $ = id => document.getElementById(id);
@@ -746,4 +746,375 @@ async function resetMonth() {
 // Teachers
 // =====================================================
 async function loadTeachers() {
-  const tbody
+  const tbody = $("teachersRows");
+  if (currentProfile.role !== "manager") {
+    tbody.innerHTML = '<tr><td colspan="4" class="empty">للمدير فقط.</td></tr>';
+    return;
+  }
+
+  const { data, error } = await db.from("profiles")
+    .select("id, full_name, email, is_active, role")
+    .eq("role", "teacher").order("full_name");
+
+  if (error) { tbody.innerHTML = '<tr><td colspan="4" class="empty">تعذر التحميل.</td></tr>'; return; }
+
+  tbody.innerHTML = (data || []).map(t => `
+    <tr>
+      <td>${escapeHtml(t.full_name || "—")}</td>
+      <td>${escapeHtml(t.email || "—")}</td>
+      <td>${t.is_active ? '<span class="tag">نشط</span>' : '<span class="group-pill unassigned">معطّل</span>'}</td>
+      <td><button class="btn secondary" data-toggle-teacher="${escapeHtml(t.id)}" data-active="${t.is_active}">${t.is_active ? "تعطيل" : "تفعيل"}</button></td>
+    </tr>`).join("") || '<tr><td colspan="4" class="empty">لا يوجد معلمون.</td></tr>';
+}
+
+async function toggleTeacher(id, active) {
+  if (!await confirmDialog({
+    title: active ? "تعطيل الحساب" : "تفعيل الحساب",
+    text: "هل تريد المتابعة؟",
+    confirmText: active ? "تعطيل" : "تفعيل",
+    danger: active
+  })) return;
+
+  const { error } = await db.from("profiles").update({ is_active: !active }).eq("id", id);
+  if (error) { message("تعذر التحديث: " + error.message, "error"); return; }
+  message("تم التحديث.", "success");
+  loadTeachers();
+}
+
+// =====================================================
+// Attendance reports
+// =====================================================
+async function loadAttendanceReportOptions() {
+  if (cachedGroups.length) { fillGroupSelects(); return; }
+  await loadGroupsCache();
+  fillGroupSelects();
+}
+
+async function runReport() {
+  const tbody = $("attendanceReportRows");
+  tbody.innerHTML = '<tr><td colspan="6" class="empty">جارٍ التحميل...</td></tr>';
+
+  let q = db.from("attendance_records")
+    .select("student_id, group_id, attendance_date, status, achievements, note")
+    .order("attendance_date", { ascending: false }).limit(5000);
+
+  const start = $("reportStartDate").value;
+  const end = $("reportEndDate").value;
+  const gid = $("reportGroupFilter").value;
+  const st = $("reportStatusFilter").value;
+
+  if (start) q = q.gte("attendance_date", start);
+  if (end) q = q.lte("attendance_date", end);
+  if (gid && gid !== "all") q = q.eq("group_id", gid);
+  if (st) q = q.eq("status", st);
+
+  const { data, error } = await q;
+  if (error) { tbody.innerHTML = '<tr><td colspan="6" class="empty">تعذر التحميل.</td></tr>'; return; }
+
+  if (!data?.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="empty">لا يوجد سجلات.</td></tr>';
+    $("reportPresentCount").textContent = $("reportAbsentCount").textContent = $("reportExcusedCount").textContent = "0";
+    $("attendanceReportRowsCount").textContent = "0 سجل";
+    return;
+  }
+
+  const sids = [...new Set(data.map(r => r.student_id))];
+  const gids = [...new Set(data.map(r => r.group_id))];
+  const [studentsRes, groupsRes] = await Promise.all([
+    sids.length ? db.from("students").select("id, full_name").in("id", sids) : { data: [] },
+    gids.length ? db.from("groups").select("id, name").in("id", gids) : { data: [] }
+  ]);
+  const sMap = Object.fromEntries((studentsRes.data || []).map(s => [s.id, s.full_name]));
+  const gMap = Object.fromEntries((groupsRes.data || []).map(g => [g.id, g.name]));
+
+  const search = $("reportStudentSearch").value.trim().toLowerCase();
+  const filtered = data.filter(r => !search || (sMap[r.student_id] || "").toLowerCase().includes(search));
+
+  $("reportPresentCount").textContent = filtered.filter(r => r.status === "present").length;
+  $("reportAbsentCount").textContent = filtered.filter(r => r.status === "absent").length;
+  $("reportExcusedCount").textContent = filtered.filter(r => r.status === "excused").length;
+  $("attendanceReportRowsCount").textContent = `${filtered.length} سجل`;
+
+  const labels = { present: "حاضر", absent: "غائب", excused: "غياب بعذر" };
+  tbody.innerHTML = filtered.map(r => `
+    <tr>
+      <td>${escapeHtml(formatDate(r.attendance_date))}</td>
+      <td>${escapeHtml(sMap[r.student_id] || "—")}</td>
+      <td>${escapeHtml(gMap[r.group_id] || "—")}</td>
+      <td><span class="attendance-status ${r.status}">${labels[r.status] || r.status}</span></td>
+      <td>${escapeHtml(r.achievements || "—")}</td>
+      <td>${escapeHtml(r.note || "—")}</td>
+    </tr>`).join("");
+}
+
+// =====================================================
+// Statistics
+// =====================================================
+async function loadStatistics() {
+  const tbody = $("statisticsRows");
+  if (currentProfile.role !== "manager") {
+    tbody.innerHTML = '<tr><td colspan="6" class="empty">للمدير فقط.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = '<tr><td colspan="6" class="empty">جارٍ التحميل...</td></tr>';
+
+  const [tRes, gRes, sRes] = await Promise.all([
+    db.from("profiles").select("id, full_name").eq("role", "teacher").order("full_name"),
+    db.from("groups").select("id, name, teacher_id"),
+    db.from("students").select("full_name, group_id, gender, notes")
+  ]);
+
+  if (tRes.error || gRes.error || sRes.error) {
+    tbody.innerHTML = '<tr><td colspan="6" class="empty">تعذر التحميل.</td></tr>';
+    return;
+  }
+
+  const teachers = tRes.data || [];
+  const groups = gRes.data || [];
+  const students = sRes.data || [];
+
+  let total = 0, boys = 0, girls = 0;
+  const rows = [];
+
+  teachers.forEach(t => {
+    const tGroups = groups.filter(g => g.teacher_id === t.id);
+    if (!tGroups.length) {
+      rows.push({ teacher: t.full_name, group: "—", students: [] });
+      return;
+    }
+    tGroups.forEach(g => {
+      const gStudents = students.filter(s => s.group_id === g.id);
+      rows.push({ teacher: t.full_name, group: g.name, students: gStudents });
+    });
+  });
+
+  rows.forEach(r => {
+    total += r.students.length;
+    boys += r.students.filter(s => s.gender === "male").length;
+    girls += r.students.filter(s => s.gender === "female").length;
+  });
+
+  $("statsStudentsCount").textContent = total;
+  $("statsBoysCount").textContent = boys;
+  $("statsGirlsCount").textContent = girls;
+
+  tbody.innerHTML = rows.map(r => {
+    const special = r.students.filter(s => (s.notes || "").trim())
+      .map(s => `${escapeHtml(s.full_name || "طالب")}: ${escapeHtml(s.notes)}`).join("؛ ");
+    return `<tr>
+      <td>${escapeHtml(r.teacher || "—")}</td>
+      <td>${escapeHtml(r.group || "—")}</td>
+      <td>${r.students.length}</td>
+      <td>${r.students.filter(s => s.gender === "male").length}</td>
+      <td>${r.students.filter(s => s.gender === "female").length}</td>
+      <td>${special || "—"}</td>
+    </tr>`;
+  }).join("") || '<tr><td colspan="6" class="empty">لا يوجد بيانات.</td></tr>';
+}
+
+// =====================================================
+// Event bindings
+// =====================================================
+function bindEvents() {
+  // Navigation
+  document.querySelectorAll("[data-view]").forEach(btn => {
+    btn.addEventListener("click", () => showView(btn.dataset.view));
+  });
+
+  // Logout
+  $("logoutBtn").addEventListener("click", async () => {
+    await db.auth.signOut();
+    window.location.replace("./index.html");
+  });
+
+  // Notice close
+  $("closeNotice")?.addEventListener("click", () => $("notice").classList.remove("show"));
+
+  // Add student
+  $("openAddStudentModal").addEventListener("click", async () => {
+    fillGroupSelects();
+    setAddStudentModal(true);
+  });
+  $("closeAddStudentModal").addEventListener("click", () => setAddStudentModal(false));
+  $("cancelAddStudentModal").addEventListener("click", () => setAddStudentModal(false));
+  $("addStudentForm").addEventListener("submit", addStudent);
+
+  // Manage students
+  $("openManageStudentModal").addEventListener("click", async () => {
+    fillGroupSelects();
+    setStudentManageModal(true);
+    await refreshManageStudents();
+  });
+  $("openDeleteStudentModal").addEventListener("click", async () => {
+    fillGroupSelects();
+    setStudentManageModal(true);
+    await refreshManageStudents();
+  });
+  $("closeStudentManageModal").addEventListener("click", () => setStudentManageModal(false));
+  $("cancelStudentManageModal").addEventListener("click", () => setStudentManageModal(false));
+  $("manageStudentGroup").addEventListener("change", refreshManageStudents);
+  $("manageStudentSelect").addEventListener("change", updateManageActions);
+  $("manageDeleteStudent").addEventListener("click", deleteStudent);
+  $("manageEditStudent").addEventListener("click", () => {
+    const row = window.__manageStudentsMap?.[$("manageStudentSelect").value];
+    if (!row) return;
+    setStudentManageModal(false);
+    openStudentEdit(row);
+  });
+
+  // Edit student
+  $("closeStudentModal").addEventListener("click", () => {
+    $("studentEditBackdrop").classList.add("hidden");
+    document.body.classList.remove("modal-open");
+  });
+  $("cancelStudentModal").addEventListener("click", () => {
+    $("studentEditBackdrop").classList.add("hidden");
+    document.body.classList.remove("modal-open");
+  });
+  $("studentEditForm").addEventListener("submit", saveStudentEdit);
+
+  // Transfer
+  $("openTransferStudentModal").addEventListener("click", openTransferModal);
+  $("closeTransferStudentModal").addEventListener("click", () => setTransferModal(false));
+  $("cancelTransferStudentModal").addEventListener("click", () => setTransferModal(false));
+  $("transferFromGroup").addEventListener("change", loadTransferStudents);
+  $("transferStudentForm").addEventListener("submit", saveTransfer);
+
+  // Students filter
+  $("studentGroupFilter").addEventListener("change", loadStudents);
+  $("searchStudents").addEventListener("click", loadStudents);
+  $("studentSearch").addEventListener("keydown", e => { if (e.key === "Enter") loadStudents(); });
+
+  // Groups
+  $("openCreateGroupModal").addEventListener("click", async () => {
+    if (currentProfile.role === "manager") {
+      $("newGroupTeacherField").classList.remove("hidden");
+      const sel = $("newGroupTeacher");
+      sel.innerHTML = '<option value="">جارٍ التحميل...</option>';
+      const { data } = await db.from("profiles").select("id, full_name")
+        .eq("role", "teacher").eq("is_active", true).order("full_name");
+      sel.innerHTML = '<option value="">اختر المعلم</option>' +
+        (data || []).map(t => `<option value="${escapeHtml(t.id)}">${escapeHtml(t.full_name || "معلم")}</option>`).join("");
+    } else {
+      $("newGroupTeacherField").classList.add("hidden");
+    }
+    $("createGroupBackdrop").classList.remove("hidden");
+    document.body.classList.add("modal-open");
+  });
+  $("closeCreateGroupModal").addEventListener("click", () => {
+    $("createGroupBackdrop").classList.add("hidden");
+    document.body.classList.remove("modal-open");
+  });
+  $("cancelCreateGroupModal").addEventListener("click", () => {
+    $("createGroupBackdrop").classList.add("hidden");
+    document.body.classList.remove("modal-open");
+  });
+  $("createGroupForm").addEventListener("submit", async e => {
+    e.preventDefault();
+    const name = $("newGroupName").value.trim();
+    const type = $("newGroupType").value.trim();
+    if (!name || !type) { message("الاسم والنوع مطلوبان.", "error"); return; }
+
+    const teacherId = currentProfile.role === "manager"
+      ? $("newGroupTeacher").value
+      : currentProfile.id;
+    if (!teacherId) { message("اختر المعلم.", "error"); return; }
+
+    const btn = $("createGroupBtn");
+    btn.disabled = true;
+    btn.textContent = "جارٍ الإنشاء...";
+
+    const { error } = await db.from("groups").insert({
+      name, group_type: type, teacher_id: teacherId,
+      logo_url: $("newGroupLogo").value.trim() || null
+    });
+
+    btn.disabled = false;
+    btn.textContent = "إنشاء الحلقة";
+
+    if (error) { message("تعذر الإنشاء: " + error.message, "error"); return; }
+    $("createGroupForm").reset();
+    $("createGroupBackdrop").classList.add("hidden");
+    document.body.classList.remove("modal-open");
+    message("تم إنشاء الحلقة.", "success");
+    loadGroups();
+  });
+
+  // Group detail
+  $("groupsRows").addEventListener("click", async e => {
+    const btn = e.target.closest("[data-view-group]");
+    if (!btn) return;
+    await openGroupDetail(btn.dataset.viewGroup, btn.dataset.groupName);
+  });
+  $("backToGroups").addEventListener("click", () => {
+    $("groupDetailView").classList.add("hidden");
+    $("groupsListPanel").classList.remove("hidden");
+    activeGroupId = null;
+  });
+  $("groupStudentSearch").addEventListener("input", () => {
+    const q = $("groupStudentSearch").value.trim().toLowerCase();
+    renderGroupStudents(activeGroupStudents.filter(s => (s.full_name || "").toLowerCase().includes(q)));
+  });
+
+  // Attendance
+  $("loadAttendanceBtn").addEventListener("click", loadAttendance);
+  $("attendanceDate").addEventListener("change", loadAttendance);
+  $("saveAttendanceBtn").addEventListener("click", saveAttendance);
+  $("exportMonthlyAttendanceBtn").addEventListener("click", exportCSV);
+  $("resetMonthlyAttendanceBtn").addEventListener("click", resetMonth);
+
+  // Teachers
+  $("teachersRows").addEventListener("click", e => {
+    const btn = e.target.closest("[data-toggle-teacher]");
+    if (!btn) return;
+    toggleTeacher(btn.dataset.toggleTeacher, btn.dataset.active === "true");
+  });
+
+  // Reports
+  $("runAttendanceReport").addEventListener("click", runReport);
+  $("resetAttendanceReport").addEventListener("click", () => {
+    $("reportStartDate").value = "";
+    $("reportEndDate").value = "";
+    $("reportGroupFilter").value = "";
+    $("reportStudentSearch").value = "";
+    $("reportStatusFilter").value = "";
+    $("attendanceReportRows").innerHTML = '<tr><td colspan="6" class="empty">اختر الفترة ثم اضغط «عرض التقرير».</td></tr>';
+  });
+
+  // Stats
+  $("refreshStatsBtn").addEventListener("click", loadStatistics);
+
+  // Escape key
+  document.addEventListener("keydown", e => {
+    if (e.key !== "Escape") return;
+    ["addStudentBackdrop", "studentManageBackdrop", "studentEditBackdrop",
+     "transferStudentBackdrop", "createGroupBackdrop", "editGroupBackdrop"].forEach(id => {
+      const el = $(id);
+      if (el && !el.classList.contains("hidden")) {
+        el.classList.add("hidden");
+        document.body.classList.remove("modal-open");
+      }
+    });
+  });
+}
+
+// =====================================================
+// Init
+// =====================================================
+(async function init() {
+  try {
+    const ok = await requireProfile();
+    if (!ok) return;
+
+    await loadGroupsCache();
+    fillGroupSelects();
+
+    bindEvents();
+
+    $("attendanceExportMonth").value = todayISO().slice(0, 7);
+    showView("overview");
+  } catch (err) {
+    console.error(err);
+    message("تعذر تحميل اللوحة: " + (err?.message || "خطأ"), "error");
+  }
+})();
