@@ -161,7 +161,8 @@
     <section id="teachersView" class="view hidden">
       <div class="panel">
         <div class="panel-head">
-          <div><h2>إدارة المعلمين</h2><p class="sub">تفعيل أو تعطيل حسابات المعلمين. (إنشاء حساب جديد يتم من Supabase Dashboard)</p></div>
+          <div><h2>إدارة المعلمين</h2><p class="sub">إضافة معلم جديد، أو تفعيل/تعطيل الحسابات.</p></div>
+          <button class="btn primary" id="openAddTeacherModal" type="button"><i class="fa-solid fa-plus"></i> إضافة معلم</button>
         </div>
         <div class="table-wrap">
           <table>
@@ -393,6 +394,34 @@
         <div class="actions">
           <button type="button" class="btn secondary" id="cancelEditGroupModal">إلغاء</button>
           <button type="submit" class="btn primary" id="saveEditGroupBtn">حفظ</button>
+        </div>
+      </footer>
+    </form>
+  </section>
+</div>
+
+<!-- إضافة معلم -->
+<div id="addTeacherBackdrop" class="modal-backdrop hidden" aria-hidden="true">
+  <section class="edit-modal" role="dialog" aria-modal="true" aria-labelledby="addTeacherTitle">
+    <header class="modal-head">
+      <div><h2 id="addTeacherTitle">إضافة معلم جديد</h2><p>أدخل بيانات الحساب.</p></div>
+      <button type="button" class="modal-close" id="closeAddTeacherModal" aria-label="إغلاق">×</button>
+    </header>
+    <form id="addTeacherForm">
+      <div class="modal-body">
+        <div class="modal-grid">
+          <div class="modal-field wide"><label for="newTeacherName">اسم المعلم *</label><input id="newTeacherName" required maxlength="150"></div>
+          <div class="modal-field wide"><label for="newTeacherEmail">البريد الإلكتروني *</label><input id="newTeacherEmail" type="email" required></div>
+          <div class="modal-field wide"><label for="newTeacherPassword">كلمة المرور المؤقتة * (8+)</label><input id="newTeacherPassword" type="text" required minlength="8"></div>
+        </div>
+        <p class="modal-hint" style="margin-top:10px">أعطِ المعلم هذه البيانات، ويستطيع تغيير كلمة المرور من صفحة الدخول.</p>
+        <div id="addTeacherStatus" class="modal-hint" style="margin-top:8px;color:#c94350"></div>
+      </div>
+      <footer class="modal-foot">
+        <div class="save-state">راجع قبل الإنشاء.</div>
+        <div class="actions">
+          <button type="button" class="btn secondary" id="cancelAddTeacherModal">إلغاء</button>
+          <button type="submit" class="btn primary" id="createTeacherBtn">إنشاء الحساب</button>
         </div>
       </footer>
     </form>
