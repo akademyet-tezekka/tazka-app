@@ -139,10 +139,10 @@
             <div><h2>الحضور والغياب</h2><p class="sub">سجّل حالة كل طالب ثم احفظ الحضور.</p></div>
           </div>
           <div class="attendance-toolbar">
-            <div class="field"><label for="attendanceDate">تاريخ الحضور</label><input id="attendanceDate" type="date" lang="en"></div>
+            <div class="field"><label for="attendanceDate">تاريخ الحضور</label><input id="attendanceDate" type="date"></div>
             <button class="btn secondary" type="button" id="loadAttendanceBtn"><i class="fa-solid fa-rotate"></i> عرض سجل اليوم</button>
             <button class="btn primary" type="button" id="saveAttendanceBtn"><i class="fa-solid fa-floppy-disk"></i> حفظ الحضور</button>
-            <div class="field" style="min-width:150px"><label for="attendanceExportMonth">شهر التصدير</label><input id="attendanceExportMonth" type="month" lang="en"></div>
+            <div class="field" style="min-width:150px"><label for="attendanceExportMonth">شهر التصدير</label><input id="attendanceExportMonth" type="month"></div>
             <button class="btn secondary" type="button" id="exportMonthlyAttendanceBtn"><i class="fa-solid fa-file-excel"></i> تصدير CSV</button>
             <button class="btn danger hidden" type="button" id="resetMonthlyAttendanceBtn"><i class="fa-solid fa-eraser"></i> تصفير الشهر</button>
           </div>
@@ -183,8 +183,8 @@
       <div class="panel">
         <div class="panel-head"><div><h2>تقارير الحضور والغياب</h2><p class="sub">اختر فترة زمنية وحلقة لعرض السجلات.</p></div></div>
         <div class="form-grid">
-          <div class="field"><label for="reportStartDate">من تاريخ</label><input type="date" id="reportStartDate" lang="en"></div>
-          <div class="field"><label for="reportEndDate">إلى تاريخ</label><input type="date" id="reportEndDate" lang="en"></div>
+          <div class="field"><label for="reportStartDate">من تاريخ</label><input type="date" id="reportStartDate"></div>
+          <div class="field"><label for="reportEndDate">إلى تاريخ</label><input type="date" id="reportEndDate"></div>
           <div class="field"><label for="reportGroupFilter">الحلقة</label><select id="reportGroupFilter"><option value="">كل الحلقات</option></select></div>
           <div class="field"><label for="reportStudentSearch">اسم الطالب</label><input id="reportStudentSearch" placeholder="ابحث باسم الطالب"></div>
           <div class="field"><label for="reportStatusFilter">الحالة</label><select id="reportStatusFilter"><option value="">كل الحالات</option><option value="present">حاضر</option><option value="absent">غائب</option><option value="excused">غائب بعذر</option></select></div>
@@ -241,12 +241,12 @@
         <div class="modal-grid">
           <div class="modal-field"><label for="newStudentName">اسم الطالب *</label><input id="newStudentName" required maxlength="150" placeholder="اسم الطالب"></div>
           <div class="modal-field"><label for="newStudentGender">الجنس</label><select id="newStudentGender"><option value="">غير محدد</option><option value="male">ذكر</option><option value="female">أنثى</option></select></div>
-          <div class="modal-field"><label for="newStudentBirthDate">المواليد</label><input id="newStudentBirthDate" type="date" lang="en"></div>
+          <div class="modal-field"><label for="newStudentBirthDate">المواليد</label><input id="newStudentBirthDate" type="date"></div>
           <div class="modal-field"><label for="newStudentResidence">محل الإقامة</label><input id="newStudentResidence" maxlength="250"></div>
           <div class="modal-field"><label for="newStudentPhone">رقم الهاتف</label><input id="newStudentPhone" type="tel" maxlength="30" inputmode="tel"></div>
           <div class="modal-field"><label for="newStudentGroup">الحلقة</label><select id="newStudentGroup"><option value="">بدون حلقة</option></select></div>
           <div class="modal-field"><label for="newStudentGroupType">نوع الحلقة</label><input id="newStudentGroupType" maxlength="120"></div>
-          <div class="modal-field"><label for="newStudentRegistrationDate">تاريخ التسجيل</label><input id="newStudentRegistrationDate" type="date" lang="en"></div>
+          <div class="modal-field"><label for="newStudentRegistrationDate">تاريخ التسجيل</label><input id="newStudentRegistrationDate" type="date"></div>
           <div class="modal-field wide"><label for="newStudentNotes">ملاحظات</label><textarea id="newStudentNotes" rows="2" maxlength="3000" placeholder="ملاحظات عن الطالب (اختياري)"></textarea></div>
         </div>
       </div>
@@ -299,12 +299,12 @@
         <div class="modal-grid">
           <div class="modal-field"><label for="editStudentName">اسم الطالب *</label><input id="editStudentName" required maxlength="150"></div>
           <div class="modal-field"><label for="editStudentGender">الجنس</label><select id="editStudentGender"><option value="">غير محدد</option><option value="male">ذكر</option><option value="female">أنثى</option></select></div>
-          <div class="modal-field"><label for="editStudentBirthDate">المواليد</label><input id="editStudentBirthDate" type="date" lang="en"></div>
+          <div class="modal-field"><label for="editStudentBirthDate">المواليد</label><input id="editStudentBirthDate" type="date"></div>
           <div class="modal-field"><label for="editStudentResidence">محل الإقامة</label><input id="editStudentResidence" maxlength="250"></div>
           <div class="modal-field"><label for="editStudentPhone">الهاتف</label><input id="editStudentPhone" type="tel" maxlength="30"></div>
           <div class="modal-field"><label for="editStudentGroup">الحلقة</label><select id="editStudentGroup"><option value="">بدون حلقة</option></select></div>
           <div class="modal-field"><label for="editStudentGroupType">نوع الحلقة</label><input id="editStudentGroupType" maxlength="120"></div>
-          <div class="modal-field"><label for="editStudentRegistrationDate">تاريخ التسجيل</label><input id="editStudentRegistrationDate" type="date" lang="en"></div>
+          <div class="modal-field"><label for="editStudentRegistrationDate">تاريخ التسجيل</label><input id="editStudentRegistrationDate" type="date"></div>
           <div class="modal-field wide"><label for="editStudentNotes">الملاحظات</label><textarea id="editStudentNotes" rows="2" maxlength="3000" placeholder="ملاحظات (اختياري)"></textarea></div>
         </div>
         <div id="studentEditStatus" class="modal-hint" style="margin-top:8px"></div>
