@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#10283f">
+  <meta name="description" content="لوحة تحكم أكاديمية تزكى">
+  <title>لوحة التحكم | أكاديمية تزكى</title>
+
+  <link rel="icon" type="image/png" href="https://i.imgur.com/gA6y80y.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+  <style>
+    :root{
+      --navy:#10283f; --navy-2:#163c57;
+      --teal:#078b91; --teal-dark:#06757b;
+      --gold:#d5ad62;
+      --bg:#f2f6fb; --text:#19334b;
+      --muted:#718096; --border:#dce4ed;
+      --danger:#c94350;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%}
+    body{
+      font-family:"Tajawal",sans-serif;
+      background:var(--bg);
+      color:var(--text);
+      min-height:100vh;
+    }
+    button{font:inherit;cursor:pointer;border:0;background:none;color:inherit}
+    input,select,textarea{font:inherit}
+    a{text-decoration:none;color:inherit}
+
+    /* ====== Layout ====== */
+    .shell{
+      display:grid;
+      grid-template-columns:260px 1fr;
+      min-height:100vh;
+    }
+
+    /* ====== Sidebar ====== */
+    aside{
+      background:linear-gradient(165deg,#102b46 0%,#163c57 58%,#075c68 100%);
+      color:#fff;
+      padding:20px 16px;
+      position:relative;
+      overflow:hidden;
+    }
+    aside::before{
+      content:"";
+      position:absolute;
+      width:240px;height:240px;
+      border:1px solid rgba(255,255,255,.07);
+      border-radius:50%;
+      inset:auto -110px -70px auto;
+      pointer-events:none;
+    }
+    .brand{
+      display:flex;align-items:center;gap:11px;
+      font-size:19px;font-weight:800;
+      padding:4px 6px 16px;
+      border-bottom:1px solid rgba(255,255,255,.15);
+      position:relative;z-index:1;
+    }
+    .brand span{color:var(--gold)}
+    .brand-logo{
+      width:48px;height:48px;border-radius:50%;
+      background:#fff;border:2px solid var(--gold);
+      object-fit:cover;flex-shrink:0;
+    }
+    .sidebar-welcome{
+      margin:14px 0 16px;
+      padding:10px 12px;border-radius:12px;
+      background:rgba(255,255,255,.08);
+      font-size:.85rem;line-height:1.5;
+      text-align:center;
+      overflow-wrap:anywhere;
+    }
+    .nav{display:grid;gap:5px}
+    .nav button{
+      border-radius:10px;
+      text-align:right;
+      padding:11px 13px;
+      color:#dbe5ed;
+      border:1px solid transparent;
+      transition:background .18s,transform .18s;
+      display:flex;align-items:center;gap:10px;
+      font-size:15px;
+    }
+    .nav button:hover{background:rgba(255,255,255,.09);color:#fff}
+    .nav button.active{
+      background:linear-gradient(110deg,rgba(255,255,255,.14),rgba(255,255,255,.04));
+      border-color:rgba(255,255,255,.13);
+      color:#fff;
+      box-shadow:inset -3px 0 0 var(--gold);
+    }
+    .nav button i{width:20px;text-align:center;font-size:15px;color:var(--gold)}
+    .logout-btn{
+      margin-top:20px;
+      width:100%;
+      padding:11px 14px;
+      border-radius:10px;
+      background:rgba(201,67,80,.18);
+      color:#ffd5da;
+      font-weight:700;
+      border:1px solid rgba(201,67,80,.35);
+      transition:background .18s;
+      display:flex;align-items:center;justify-content:center;gap:8px;
+    }
+    .logout-btn:hover{background:rgba(201,67,80,.3)}
+
+    /* ====== Main ====== */
+    main{
+      padding:24px clamp(16px,2.4vw,32px);
+      min-width:0;
+      display:flex;flex-direction:column;
+    }
+    .topbar{
+      display:flex;align-items:center;justify-content:space-between;
+      gap:12px;flex-wrap:wrap;margin-bottom:20px;
+    }
+    .page-title{font-size:24px;font-weight:800;color:var(--navy)}
+    .page-sub{color:var(--muted);font-size:14px;margin-top:4px}
+
+    /* ====== Views ====== */
+    .view{display:none}
+    .view.active{display:block;animation:fadeIn .25s ease}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+
+    /* ====== Panel ====== */
+    .panel{
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:20px;
+      box-shadow:0 4px 18px rgba(16,43,70,.06);
+      margin-bottom:16px;
+    }
+    .panel h2{font-size:19px;color:var(--navy);margin-bottom:14px}
+
+    /* ====== Loading ====== */
+    .loading{
+      display:flex;align-items:center;justify-content:center;
+      padding:40px;color:var(--muted);gap:12px;
+    }
+    .spinner{
+      width:20px;height:20px;
+      border:2.5px solid #cde7e5;
+      border-top-color:var(--teal);
+      border-radius:50%;
+      animation:spin .7s linear infinite;
+    }
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* ====== Notice ====== */
+    .notice{
+      display:none;
+      position:fixed;top:18px;left:50%;transform:translateX(-50%);
+      z-index:2000;width:min(540px,calc(100% - 28px));
+      padding:12px 14px;border-radius:14px;
+      font-weight:700;line-height:1.6;
+      box-shadow:0 14px 40px rgba(16,43,70,.18);
+      border:1px solid transparent;
+      backdrop-filter:blur(14px);
+    }
+    .notice.show{display:block;animation:noticeIn .18s ease-out}
+    @keyframes noticeIn{from{opacity:0;transform:translate(-50%,-8px)}to{opacity:1;transform:translate(-50%,0)}}
+    .notice.error{background:#fff0f1;color:#a52b39;border-color:#f4cbd0}
+    .notice.info{background:#eaf7f7;color:#066b70;border-color:#c6eeee}
+    .notice.success{background:#eafaf1;color:#0f7a4a;border-color:#c6eede}
+
+    /* ====== Mobile ====== */
+    @media (max-width:850px){
+      .shell{grid-template-columns:1fr}
+      aside{padding:14px}
+      .nav{grid-template-columns:1fr 1fr;display:grid}
+      .nav button{font-size:13px;padding:9px 11px}
+      .logout-btn{grid-column:1/-1}
+      main{padding:16px}
+    }
+
+    @media (prefers-reduced-motion:reduce){
+      *,*::before,*::after{animation:none!important;transition:none!important}
+    }
+    :focus-visible{outline:2px solid var(--teal);outline-offset:2px;border-radius:6px}
+    ::selection{background:var(--teal);color:#fff}
+  </style>
+</head>
+<body>
+
+<div class="shell">
+  <aside>
+    <div class="brand">
+      <img class="brand-logo" src="https://i.imgur.com/gA6y80y.png" alt="شعار أكاديمية تزكى">
+      <div>أكاديمية <span>تزكى</span></div>
+    </div>
+
+    <p class="sidebar-welcome" id="sidebarWelcome">جارٍ التحقق...</p>
+
+    <nav class="nav" aria-label="القائمة الرئيسية">
+      <button class="active" data-view="overview">
+        <i class="fa-solid fa-chart-line"></i> نظرة عامة
+      </button>
+      <button data-view="students">
+        <i class="fa-solid fa-user-graduate"></i> الطلاب
+      </button>
+      <button data-view="groups">
+        <i class="fa-solid fa-layer-group"></i> الحلقات
+      </button>
+      <button data-view="teachers" id="navTeachers">
+        <i class="fa-solid fa-chalkboard-user"></i> المعلمون
+      </button>
+      <button data-view="attendance">
+        <i class="fa-solid fa-clipboard-check"></i> الحضور
+      </button>
+      <button data-view="reports">
+        <i class="fa-solid fa-chart-pie"></i> التقارير
+      </button>
+    </nav>
+
+    <button class="logout-btn" id="logoutBtn">
+      <i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج
+    </button>
+  </aside>
+
+  <main>
+    <div class="topbar">
+      <div>
+        <h1 class="page-title" id="pageTitle">نظرة عامة</h1>
+        <p class="page-sub" id="pageSub">جارٍ تحميل البيانات...</p>
+      </div>
+    </div>
+
+    <div class="notice" id="notice" role="status" aria-live="polite"></div>
+
+    <!-- نظرة عامة -->
+    <section class="view active" id="view-overview">
+      <div class="panel">
+        <div class="loading"><div class="spinner"></div> جارٍ التحميل...</div>
+      </div>
+    </section>
+
+    <!-- الطلاب -->
+    <section class="view" id="view-students">
+      <div class="panel"><h2>الطلاب</h2><p style="color:var(--muted)">قيد الإنشاء — المرحلة 3</p></div>
+    </section>
+
+    <!-- الحلقات -->
+    <section class="view" id="view-groups">
+      <div class="panel"><h2>الحلقات</h2><p style="color:var(--muted)">قيد الإنشاء — المرحلة 4</p></div>
+    </section>
+
+    <!-- المعلمون -->
+    <section class="view" id="view-teachers">
+      <div class="panel"><h2>المعلمون</h2><p style="color:var(--muted)">قيد الإنشاء — المرحلة 5</p></div>
+    </section>
+
+    <!-- الحضور -->
+    <section class="view" id="view-attendance">
+      <div class="panel"><h2>الحضور</h2><p style="color:var(--muted)">قيد الإنشاء — المرحلة 5</p></div>
+    </section>
+
+    <!-- التقارير -->
+    <section class="view" id="view-reports">
+      <div class="panel"><h2>التقارير</h2><p style="color:var(--muted)">قيد الإنشاء — المرحلة 6</p></div>
+    </section>
+
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  // ====== إعدادات ======
+  const SUPABASE_URL = "https://zncfwhytbcsacxyxyqls.supabase.co";
+  const SUPABASE_KEY = "ضع_المفتاح_الكامل_هنا";
+
+  const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  let currentProfile = null;
+
+  // ====== Helpers ======
+  const $ = id => document.getElementById(id);
+
+  function showMessage(text, type = "info") {
+    const n = $("notice");
+    n.textContent = text;
+    n.className = "notice show " + type;
+    n.setAttribute("role", type === "error" ? "alert" : "status");
+    n.setAttribute("aria-live", type === "error" ? "assertive" : "polite");
+    clearTimeout(showMessage._t);
+    showMessage._t = setTimeout(() => n.classList.remove("show"), 5000);
+  }
+
+  function setPageInfo(title, sub) {
+    $("pageTitle").textContent = title;
+    $("pageSub").textContent = sub || "";
+  }
+
+  function showView(viewId) {
+    document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+    const target = $("view-" + viewId);
+    if (target) target.classList.add("active");
+    document.querySelectorAll(".nav button").forEach(b => {
+      b.classList.toggle("active", b.dataset.view === viewId);
+    });
+    const titles = {
+      overview: ["نظرة عامة", "ملخص سريع لأداء الأكاديمية"],
+      students: ["الطلاب", "إدارة بيانات الطلاب"],
+      groups:   ["الحلقات", "إدارة حلقات الأكاديمية"],
+      teachers: ["المعلمون", "إدارة حسابات المعلمين"],
+      attendance: ["الحضور", "تسجيل ومتابعة الحضور"],
+      reports:  ["التقارير", "تقارير وإحصائيات"],
+    };
+    const [t, s] = titles[viewId] || ["لوحة التحكم", ""];
+    setPageInfo(t, s);
+  }
+
+  // ====== التحقق من الجلسة والصلاحيات ======
+  async function requireProfile() {
+    const { data: { user }, error } = await db.auth.getUser();
+    if (error || !user) {
+      window.location.replace("./index.html");
+      return false;
+    }
+
+    const { data: profile, error: profileError } = await db
+      .from("profiles")
+      .select("role, is_active, full_name")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (profileError || !profile || !profile.is_active ||
+        !["manager", "teacher"].includes(profile.role)) {
+      await db.auth.signOut();
+      window.location.replace("./index.html");
+      return false;
+    }
+
+    currentProfile = { ...profile, id: user.id, email: user.email };
+
+    const welcome = `مرحبًا ${profile.full_name || user.email}`;
+    $("sidebarWelcome").textContent = welcome;
+
+    // إخفاء أقسام غير متاحة للمعلم
+    if (profile.role === "teacher") {
+      $("navTeachers").style.display = "none";
+    }
+
+    return true;
+  }
+
+  // ====== تحميل النظرة العامة ======
+  async function loadOverview() {
+    const overview = $("view-overview");
+    overview.innerHTML = `
+      <div class="panel">
+        <h2>مرحبًا بك</h2>
+        <p style="color:var(--muted);line-height:1.8">
+          تم تسجيل الدخول بنجاح كـ
+          <strong>${currentProfile.role === "manager" ? "مدير" : "معلم"}</strong>.
+        </p>
+        <p style="color:var(--muted);line-height:1.8;margin-top:10px">
+          الأقسام الكاملة قيد البناء. في المراحل القادمة سنضيف:
+        </p>
+        <ul style="margin-top:10px;padding-right:20px;color:var(--muted);line-height:2">
+          <li>عرض وإدارة الطلاب</li>
+          <li>إدارة الحلقات والحضور</li>
+          <li>تقارير وإحصائيات</li>
+        </ul>
+      </div>
+    `;
+  }
+
+  // ====== تسجيل الخروج ======
+  $("logoutBtn").addEventListener("click", async () => {
+    await db.auth.signOut();
+    window.location.replace("./index.html");
+  });
+
+  // ====== التنقل ======
+  document.querySelectorAll(".nav button").forEach(btn => {
+    btn.addEventListener("click", () => showView(btn.dataset.view));
+  });
+
+  // ====== التهيئة ======
+  (async function init() {
+    const ok = await requireProfile();
+    if (!ok) return;
+
+    await loadOverview();
+
+    // مراقبة تغيير الجلسة
+    db.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_OUT") {
+        window.location.replace("./index.html");
+      }
+    });
+  })().catch(err => {
+    console.error(err);
+    showMessage("تعذر تحميل اللوحة: " + (err?.message || "خطأ غير معروف"), "error");
+  });
+</script>
+
+</body>
+</html>
