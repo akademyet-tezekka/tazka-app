@@ -22,7 +22,7 @@ function message(text, type = "info") {
   $("noticeText").textContent = text;
   n.className = "notice show " + type;
   clearTimeout(message._t);
-  message._t = setTimeout(() => n.classList.remove("show"), 6000);
+  message._t = setTimeout(() => n.classList.remove("show"), 7000);
 }
 
 function escapeHtml(v) {
@@ -68,13 +68,19 @@ function confirmDialog({ title = "تأكيد", text = "", confirmText = "تأك�
   });
 }
 
+function generatePassword() {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
+  let p = "";
+  for (let i = 0; i < 12; i++) p += chars[Math.floor(Math.random() * chars.length)];
+  return p;
+}
+
 // =====================================================
 // View switching
 // =====================================================
 function showView(name) {
   ["overview", "students", "groups", "teachers", "attendanceReports", "statistics"]
-    .forEach(v => $("view-" + v)?.classList.toggle("hidden", v !== name) ||
-                  $(v + "View")?.classList.toggle("hidden", v !== name));
+    .forEach(v => $(v + "View")?.classList.toggle("hidden", v !== name));
 
   document.querySelectorAll("[data-view]").forEach(b =>
     b.classList.toggle("active", b.dataset.view === name));
@@ -91,7 +97,6 @@ function showView(name) {
   $("pageTitle").textContent = t;
   $("pageSub").textContent = s;
 
-  // تحميل القسم عند فتحه
   if (name === "overview") loadOverview();
   if (name === "students") loadStudents();
   if (name === "groups") loadGroups();
@@ -127,7 +132,6 @@ async function requireProfile() {
   $("sidebarWelcome").textContent =
     `مرحبًا ${profile.full_name || user.email} — ${profile.role === "manager" ? "مدير" : "معلم"}`;
 
-  // إخفاء أقسام غير متاحة للمعلم
   if (profile.role === "teacher") {
     $("navTeachers")?.classList.add("hidden");
     $("navStats")?.classList.add("hidden");
@@ -287,7 +291,7 @@ async function addStudent(e) {
 }
 
 // =====================================================
-// Manage students (edit/delete via modal)
+// Manage students
 // =====================================================
 function setStudentManageModal(open) {
   const m = $("studentManageBackdrop");
@@ -531,7 +535,6 @@ async function loadGroups() {
     return;
   }
 
-  // أسماء المعلمين + عدد الطلاب
   const teacherIds = [...new Set(cachedGroups.map(g => g.teacher_id).filter(Boolean))];
   let names = {};
   if (teacherIds.length) {
@@ -591,7 +594,6 @@ async function openGroupDetail(id, name) {
   $("groupDetailSubtitle").textContent = `${activeGroupStudents.length} طالب`;
   renderGroupStudents(activeGroupStudents);
 
-  // تحميل الحضور
   if (!$("attendanceDate").value) $("attendanceDate").value = todayISO();
   loadAttendance();
 }
@@ -753,7 +755,7 @@ async function loadTeachers() {
   }
 
   const { data, error } = await db.from("profiles")
-    .select("id, full_name, email, is_active, role")
+    .select("id, full_name, is_active, role")
     .eq("role", "teacher").order("full_name");
 
   if (error) { tbody.innerHTML = '<tr><td colspan="4" class="empty">تعذر التحميل.</td></tr>'; return; }
@@ -761,7 +763,7 @@ async function loadTeachers() {
   tbody.innerHTML = (data || []).map(t => `
     <tr>
       <td>${escapeHtml(t.full_name || "—")}</td>
-      <td>${escapeHtml(t.email || "—")}</td>
+      <td>—</td>
       <td>${t.is_active ? '<span class="tag">نشط</span>' : '<span class="group-pill unassigned">معطّل</span>'}</td>
       <td><button class="btn secondary" data-toggle-teacher="${escapeHtml(t.id)}" data-active="${t.is_active}">${t.is_active ? "تعطيل" : "تفعيل"}</button></td>
     </tr>`).join("") || '<tr><td colspan="4" class="empty">لا يوجد معلمون.</td></tr>';
@@ -778,6 +780,48 @@ async function toggleTeacher(id, active) {
   const { error } = await db.from("profiles").update({ is_active: !active }).eq("id", id);
   if (error) { message("تعذر التحديث: " + error.message, "error"); return; }
   message("تم التحديث.", "success");
+  loadTeachers();
+}
+
+async function createTeacher(e) {
+  e.preventDefault();
+  const btn = $("createTeacherBtn");
+  const name = $("newTeacherName").value.trim();
+  const email = $("newTeacherEmail").value.trim().toLowerCase();
+  const password = $("newTeacherPassword").value;
+  const status = $("addTeacherStatus");
+
+  if (!name || !email || password.length < 8) {
+    status.textContent = "أكمل البيانات (كلمة المرور 8+).";
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = "جارٍ الإنشاء...";
+  status.textContent = "";
+
+  const { data, error } = await db.rpc("create_teacher_account", {
+    p_full_name: name,
+    p_email: email,
+    p_password: password
+  });
+
+  btn.disabled = false;
+  btn.textContent = "إنشاء الحساب";
+
+  if (error) {
+    status.textContent = "خطأ: " + error.message;
+    return;
+  }
+  if (data?.error) {
+    status.textContent = data.error;
+    return;
+  }
+
+  $("addTeacherForm").reset();
+  $("addTeacherBackdrop").classList.add("hidden");
+  document.body.classList.remove("modal-open");
+  message(`✅ تم إنشاء حساب ${name}. البريد: ${email} — كلمة المرور: ${password}`, "success");
   loadTeachers();
 }
 
@@ -916,18 +960,15 @@ async function loadStatistics() {
 // Event bindings
 // =====================================================
 function bindEvents() {
-  // Navigation
   document.querySelectorAll("[data-view]").forEach(btn => {
     btn.addEventListener("click", () => showView(btn.dataset.view));
   });
 
-  // Logout
   $("logoutBtn").addEventListener("click", async () => {
     await db.auth.signOut();
     window.location.replace("./index.html");
   });
 
-  // Notice close
   $("closeNotice")?.addEventListener("click", () => $("notice").classList.remove("show"));
 
   // Add student
@@ -1070,6 +1111,24 @@ function bindEvents() {
     toggleTeacher(btn.dataset.toggleTeacher, btn.dataset.active === "true");
   });
 
+  // Add teacher
+  $("openAddTeacherModal").addEventListener("click", () => {
+    $("newTeacherPassword").value = generatePassword();
+    $("addTeacherStatus").textContent = "";
+    $("addTeacherBackdrop").classList.remove("hidden");
+    document.body.classList.add("modal-open");
+    setTimeout(() => $("newTeacherName").focus(), 50);
+  });
+  $("closeAddTeacherModal").addEventListener("click", () => {
+    $("addTeacherBackdrop").classList.add("hidden");
+    document.body.classList.remove("modal-open");
+  });
+  $("cancelAddTeacherModal").addEventListener("click", () => {
+    $("addTeacherBackdrop").classList.add("hidden");
+    document.body.classList.remove("modal-open");
+  });
+  $("addTeacherForm").addEventListener("submit", createTeacher);
+
   // Reports
   $("runAttendanceReport").addEventListener("click", runReport);
   $("resetAttendanceReport").addEventListener("click", () => {
@@ -1088,7 +1147,8 @@ function bindEvents() {
   document.addEventListener("keydown", e => {
     if (e.key !== "Escape") return;
     ["addStudentBackdrop", "studentManageBackdrop", "studentEditBackdrop",
-     "transferStudentBackdrop", "createGroupBackdrop", "editGroupBackdrop"].forEach(id => {
+     "transferStudentBackdrop", "createGroupBackdrop", "editGroupBackdrop",
+     "addTeacherBackdrop"].forEach(id => {
       const el = $(id);
       if (el && !el.classList.contains("hidden")) {
         el.classList.add("hidden");
