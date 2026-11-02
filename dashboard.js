@@ -1,7 +1,7 @@
 // =====================================================
 // إعدادات Supabase
 // =====================================================
-const SUPABASE_URL = "https://zncfwhytbcsacxyxyqls.supabase.co";
+const SUPABASE_URL = "https://oojinjlzzqfqbcblgrsm.supabase.co";
 const SUPABASE_KEY = "sb_publishable_WKICV8R27c87HKTwU9qmkQ_6tiZmjin";
 
 const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
