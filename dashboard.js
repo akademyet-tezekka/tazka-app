@@ -306,7 +306,8 @@ async function refreshManageStudents() {
   sel.disabled = true;
   sel.innerHTML = '<option value="">جارٍ التحميل...</option>';
 
-  let q = db.from("students").select("id, full_name, group_id, created_by, gender, birth_date, residence, phone, notes")
+  let q = db.from("students")
+    .select("id, full_name, group_id, group_type, registration_date, created_by, gender, birth_date, residence, phone, notes")
     .order("full_name").limit(500);
 
   if (groupId === "__unassigned__") q = q.is("group_id", null);
@@ -351,6 +352,8 @@ function openStudentEdit(row) {
   $("editStudentBirthDate").value = row.birth_date || "";
   $("editStudentResidence").value = row.residence || "";
   $("editStudentPhone").value = row.phone || "";
+  $("editStudentGroupType").value = row.group_type || "";
+  $("editStudentRegistrationDate").value = row.registration_date || "";
   $("editStudentNotes").value = row.notes || "";
 
   const sel = $("editStudentGroup");
@@ -379,6 +382,8 @@ async function saveStudentEdit(e) {
   const updates = {
     full_name: name,
     group_id: $("editStudentGroup").value || null,
+    group_type: $("editStudentGroupType").value.trim() || null,
+    registration_date: $("editStudentRegistrationDate").value || null,
     gender: $("editStudentGender").value || null,
     birth_date: $("editStudentBirthDate").value || null,
     residence: $("editStudentResidence").value.trim() || null,
