@@ -107,11 +107,18 @@
     <section id="groupsView" class="view hidden">
       <div class="panel" id="groupsListPanel">
         <div class="panel-head">
-          <div><h2>الحلقات</h2><p class="sub">اختر الحلقة لفتح تفاصيلها وقائمة طلابها.</p></div>
-          <div class="actions">
-            <span class="group-count" id="visibleGroupsCount">— حلقة</span>
-            <button class="btn primary" id="openCreateGroupModal" type="button"><i class="fa-solid fa-plus"></i> إضافة حلقة</button>
-          </div>
+          <div><h2>إدارة الحلقات</h2><p class="sub">إضافة حلقة جديدة، أو اختيار حلقة لتعديلها أو حذفها.</p></div>
+          <span class="group-count" id="visibleGroupsCount">— حلقة</span>
+        </div>
+        <div class="actions" style="margin-bottom:14px">
+          <button class="btn primary" id="openCreateGroupModal" type="button"><i class="fa-solid fa-plus"></i> إضافة حلقة</button>
+        </div>
+        <div class="student-management-tools" style="margin-bottom:16px">
+          <select id="manageGroupSelect" aria-label="اختر الحلقة لإدارتها">
+            <option value="">اختر الحلقة التي تريد إدارتها</option>
+          </select>
+          <button class="btn secondary" id="manageEditGroupBtn" type="button" disabled><i class="fa-solid fa-pen"></i> تعديل</button>
+          <button class="btn danger" id="manageDeleteGroupBtn" type="button" disabled><i class="fa-solid fa-trash"></i> حذف</button>
         </div>
         <div class="groups-grid" id="groupsRows"><div class="empty">جارٍ تحميل الحلقات...</div></div>
       </div>
