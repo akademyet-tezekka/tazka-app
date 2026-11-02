@@ -572,7 +572,12 @@ async function loadGroups() {
       </div>
       <div class="group-card-actions">
         <span class="group-count">${cnt} ${cnt === 1 ? "طالب" : "طلاب"}</span>
-        <button class="group-view-btn" type="button" data-view-group="${escapeHtml(g.id)}" data-group-name="${escapeHtml(g.name || "حلقة")}">عرض الحلقة</button>
+        <div class="actions">
+          <button class="group-view-btn" type="button" data-view-group="${escapeHtml(g.id)}" data-group-name="${escapeHtml(g.name || "حلقة")}">عرض الحلقة</button>
+          ${(currentProfile.role === "manager" || g.teacher_id === currentProfile.id)
+            ? `<button class="btn danger" type="button" data-delete-group="${escapeHtml(g.id)}" data-group-name="${escapeHtml(g.name || "حلقة")}" title="حذف الحلقة" style="padding:7px 10px;font-size:13px"><i class="fa-solid fa-trash"></i></button>`
+            : ""}
+        </div>
       </div>
     </article>`;
   }).join("");
@@ -747,6 +752,68 @@ async function resetMonth() {
   if (error) { message("تعذر التصفير: " + error.message, "error"); return; }
   message(`تم حذف ${data} سجل.`, "success");
   loadAttendance();
+}
+
+// =====================================================
+// Delete group (جديد)
+// =====================================================
+async function deleteGroup(id, name) {
+  if (!["manager", "teacher"].includes(currentProfile.role)) {
+    message("لا تملك صلاحية حذف الحلقات.", "error");
+    return;
+  }
+
+  const group = cachedGroups.find(g => g.id === id);
+  if (!group) { message("الحلقة غير موجودة.", "error"); return; }
+
+  if (currentProfile.role === "teacher" && group.teacher_id !== currentProfile.id) {
+    message("يمكنك حذف حلقاتك فقط.", "error");
+    return;
+  }
+
+  if (!await confirmDialog({
+    title: "حذف الحلقة",
+    text: `سيتم حذف «${name}» فقط إذا كانت فارغة من الطلاب وسجلات الحضور. متابعة؟`,
+    confirmText: "نعم، احذف",
+    danger: true
+  })) return;
+
+  const { count: studentCount, error: scErr } = await db
+    .from("students")
+    .select("id", { count: "exact", head: true })
+    .eq("group_id", id);
+
+  if (scErr) { message("تعذر التحقق: " + scErr.message, "error"); return; }
+  if ((studentCount || 0) > 0) {
+    message(`لا يمكن حذف الحلقة — تحتوي على ${studentCount} طالب. انقلهم أولاً.`, "error");
+    return;
+  }
+
+  const { count: attCount, error: acErr } = await db
+    .from("attendance_records")
+    .select("id", { count: "exact", head: true })
+    .eq("group_id", id);
+
+  if (acErr && !/does not exist|schema cache/i.test(acErr.message || "")) {
+    message("تعذر التحقق من سجلات الحضور: " + acErr.message, "error");
+    return;
+  }
+  if ((attCount || 0) > 0) {
+    message("لا يمكن حذف الحلقة — تحتوي على سجلات حضور.", "error");
+    return;
+  }
+
+  const { data, error } = await db.from("groups").delete().eq("id", id).select("id");
+
+  if (error) { message("تعذر الحذف: " + error.message, "error"); return; }
+  if (!data?.length) {
+    message("لم يتم الحذف — تحقق من صلاحياتك.", "error");
+    return;
+  }
+
+  message("تم حذف الحلقة بنجاح.", "success");
+  loadGroups();
+  loadOverview();
 }
 
 // =====================================================
@@ -976,7 +1043,6 @@ function bindEvents() {
 
   $("closeNotice")?.addEventListener("click", () => $("notice").classList.remove("show"));
 
-  // Add student
   $("openAddStudentModal").addEventListener("click", async () => {
     fillGroupSelects();
     setAddStudentModal(true);
@@ -985,7 +1051,6 @@ function bindEvents() {
   $("cancelAddStudentModal").addEventListener("click", () => setAddStudentModal(false));
   $("addStudentForm").addEventListener("submit", addStudent);
 
-  // Manage students
   $("openManageStudentModal").addEventListener("click", async () => {
     fillGroupSelects();
     setStudentManageModal(true);
@@ -1008,7 +1073,6 @@ function bindEvents() {
     openStudentEdit(row);
   });
 
-  // Edit student
   $("closeStudentModal").addEventListener("click", () => {
     $("studentEditBackdrop").classList.add("hidden");
     document.body.classList.remove("modal-open");
@@ -1019,19 +1083,16 @@ function bindEvents() {
   });
   $("studentEditForm").addEventListener("submit", saveStudentEdit);
 
-  // Transfer
   $("openTransferStudentModal").addEventListener("click", openTransferModal);
   $("closeTransferStudentModal").addEventListener("click", () => setTransferModal(false));
   $("cancelTransferStudentModal").addEventListener("click", () => setTransferModal(false));
   $("transferFromGroup").addEventListener("change", loadTransferStudents);
   $("transferStudentForm").addEventListener("submit", saveTransfer);
 
-  // Students filter
   $("studentGroupFilter").addEventListener("change", loadStudents);
   $("searchStudents").addEventListener("click", loadStudents);
   $("studentSearch").addEventListener("keydown", e => { if (e.key === "Enter") loadStudents(); });
 
-  // Groups
   $("openCreateGroupModal").addEventListener("click", async () => {
     if (currentProfile.role === "manager") {
       $("newGroupTeacherField").classList.remove("hidden");
@@ -1086,12 +1147,17 @@ function bindEvents() {
     loadGroups();
   });
 
-  // Group detail
   $("groupsRows").addEventListener("click", async e => {
-    const btn = e.target.closest("[data-view-group]");
-    if (!btn) return;
-    await openGroupDetail(btn.dataset.viewGroup, btn.dataset.groupName);
+    const delBtn = e.target.closest("[data-delete-group]");
+    if (delBtn) {
+      await deleteGroup(delBtn.dataset.deleteGroup, delBtn.dataset.groupName);
+      return;
+    }
+    const viewBtn = e.target.closest("[data-view-group]");
+    if (!viewBtn) return;
+    await openGroupDetail(viewBtn.dataset.viewGroup, viewBtn.dataset.groupName);
   });
+
   $("backToGroups").addEventListener("click", () => {
     $("groupDetailView").classList.add("hidden");
     $("groupsListPanel").classList.remove("hidden");
@@ -1102,21 +1168,18 @@ function bindEvents() {
     renderGroupStudents(activeGroupStudents.filter(s => (s.full_name || "").toLowerCase().includes(q)));
   });
 
-  // Attendance
   $("loadAttendanceBtn").addEventListener("click", loadAttendance);
   $("attendanceDate").addEventListener("change", loadAttendance);
   $("saveAttendanceBtn").addEventListener("click", saveAttendance);
   $("exportMonthlyAttendanceBtn").addEventListener("click", exportCSV);
   $("resetMonthlyAttendanceBtn").addEventListener("click", resetMonth);
 
-  // Teachers
   $("teachersRows").addEventListener("click", e => {
     const btn = e.target.closest("[data-toggle-teacher]");
     if (!btn) return;
     toggleTeacher(btn.dataset.toggleTeacher, btn.dataset.active === "true");
   });
 
-  // Add teacher
   $("openAddTeacherModal").addEventListener("click", () => {
     $("newTeacherPassword").value = generatePassword();
     $("addTeacherStatus").textContent = "";
@@ -1134,7 +1197,6 @@ function bindEvents() {
   });
   $("addTeacherForm").addEventListener("submit", createTeacher);
 
-  // Reports
   $("runAttendanceReport").addEventListener("click", runReport);
   $("resetAttendanceReport").addEventListener("click", () => {
     $("reportStartDate").value = "";
@@ -1145,10 +1207,8 @@ function bindEvents() {
     $("attendanceReportRows").innerHTML = '<tr><td colspan="6" class="empty">اختر الفترة ثم اضغط «عرض التقرير».</td></tr>';
   });
 
-  // Stats
   $("refreshStatsBtn").addEventListener("click", loadStatistics);
 
-  // Escape key
   document.addEventListener("keydown", e => {
     if (e.key !== "Escape") return;
     ["addStudentBackdrop", "studentManageBackdrop", "studentEditBackdrop",
