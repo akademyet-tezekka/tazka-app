@@ -1279,7 +1279,49 @@ function bindEvents() {
     if (!toggleBtn) return;
     toggleTeacher(toggleBtn.dataset.toggleTeacher, toggleBtn.dataset.active === "true");
   });
+  // أزرار إدارة المعلمين
+  $("openManageTeacherModal")?.addEventListener("click", async () => {
+    setTeacherManageModal(true);
+    await refreshManageTeachers();
+  });
+  $("openDeleteTeacherModal")?.addEventListener("click", async () => {
+    setTeacherManageModal(true);
+    await refreshManageTeachers();
+  });
+  $("closeTeacherManageModal")?.addEventListener("click", () => setTeacherManageModal(false));
+  $("cancelTeacherManageModal")?.addEventListener("click", () => setTeacherManageModal(false));
+  $("manageTeacherSelect")?.addEventListener("change", updateManageTeacherActions);
 
+  $("manageEditTeacher")?.addEventListener("click", () => {
+    const id = $("manageTeacherSelect").value;
+    const t = window.__teachersMap?.[id];
+    if (!t) return;
+    const newName = prompt("اسم المعلم الجديد:", t.full_name || "");
+    if (newName === null) return;
+    if (!newName.trim()) { message("الاسم مطلوب.", "error"); return; }
+    db.from("profiles").update({ full_name: newName.trim() }).eq("id", id).select("id").then(({ data, error }) => {
+      if (error) { message("تعذر التعديل: " + error.message, "error"); return; }
+      if (!data?.length) { message("لم يتم التعديل — تحقق من الصلاحيات.", "error"); return; }
+      message("تم تعديل اسم المعلم.", "success");
+      loadTeachers();
+      refreshManageTeachers();
+    });
+  });
+
+  $("manageToggleTeacher")?.addEventListener("click", async () => {
+    const id = $("manageTeacherSelect").value;
+    const t = window.__teachersMap?.[id];
+    if (!t) return;
+    await toggleTeacher(t.id, t.is_active);
+    await refreshManageTeachers();
+  });
+
+  $("manageDeleteTeacher")?.addEventListener("click", async () => {
+    const id = $("manageTeacherSelect").value;
+    const t = window.__teachersMap?.[id];
+    if (!t) return;
+    await deleteTeacher(t.id, t.full_name || "المعلم");
+  });
   $("openAddTeacherModal").addEventListener("click", () => {
     $("newTeacherPassword").value = generatePassword();
     $("addTeacherStatus").textContent = "";
@@ -1313,7 +1355,7 @@ function bindEvents() {
     if (e.key !== "Escape") return;
     ["addStudentBackdrop", "studentManageBackdrop", "studentEditBackdrop",
      "transferStudentBackdrop", "createGroupBackdrop", "editGroupBackdrop",
-     "addTeacherBackdrop"].forEach(id => {
+     "addTeacherBackdrop", "teacherManageBackdrop"].forEach(id => {
       const el = $(id);
       if (el && !el.classList.contains("hidden")) {
         el.classList.add("hidden");
