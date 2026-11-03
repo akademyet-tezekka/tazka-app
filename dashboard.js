@@ -618,22 +618,49 @@ function openEditGroupModal(id) {
     return;
   }
 
-  const name = prompt("اسم الحلقة:", group.name || "");
-  if (name === null) return;
-  if (!name.trim()) { message("الاسم مطلوب.", "error"); return; }
+  $("editingGroupId").value = group.id;
+  $("editGroupName").value = group.name || "";
+  $("editGroupType").value = group.group_type || "";
+  $("editGroupLogo").value = group.logo_url && !group.logo_url.startsWith("emoji:") ? group.logo_url : "";
+  $("editGroupStatus").textContent = "";
 
-  const type = prompt("نوع الحلقة:", group.group_type || "");
-  if (type === null) return;
+  $("editGroupBackdrop").classList.remove("hidden");
+  document.body.classList.add("modal-open");
+  setTimeout(() => $("editGroupName").focus(), 50);
+}
 
-  db.from("groups").update({
-    name: name.trim(),
-    group_type: type.trim() || null
-  }).eq("id", id).select("id").then(({ data, error }) => {
-    if (error) { message("تعذر التعديل: " + error.message, "error"); return; }
-    if (!data?.length) { message("لم يتم التعديل — تحقق من الصلاحيات.", "error"); return; }
-    message("تم تعديل الحلقة.", "success");
-    loadGroups();
-  });
+async function saveGroupEdit(e) {
+  e.preventDefault();
+  const id = $("editingGroupId").value;
+  const name = $("editGroupName").value.trim();
+  const type = $("editGroupType").value.trim();
+  const logo = $("editGroupLogo").value.trim();
+  const status = $("editGroupStatus");
+
+  if (!id) { status.textContent = "خطأ: الحلقة غير محددة."; return; }
+  if (!name) { status.textContent = "اسم الحلقة مطلوب."; return; }
+  if (!type) { status.textContent = "نوع الحلقة مطلوب."; return; }
+
+  const btn = $("saveEditGroupBtn");
+  btn.disabled = true;
+  btn.textContent = "جارٍ الحفظ...";
+
+  const { data, error } = await db.from("groups").update({
+    name,
+    group_type: type,
+    logo_url: logo || null
+  }).eq("id", id).select("id");
+
+  btn.disabled = false;
+  btn.textContent = "حفظ";
+
+  if (error) { status.textContent = "خطأ: " + error.message; return; }
+  if (!data?.length) { status.textContent = "لم يتم التعديل — تحقق من الصلاحيات."; return; }
+
+  $("editGroupBackdrop").classList.add("hidden");
+  document.body.classList.remove("modal-open");
+  message("تم تعديل الحلقة.", "success");
+  loadGroups();
 }
 
 async function openGroupDetail(id, name) {
@@ -1306,6 +1333,16 @@ function bindEvents() {
     if (!group) return;
     await deleteGroup(group.id, group.name || "حلقة");
   });
+
+  $("closeEditGroupModal")?.addEventListener("click", () => {
+    $("editGroupBackdrop").classList.add("hidden");
+    document.body.classList.remove("modal-open");
+  });
+  $("cancelEditGroupModal")?.addEventListener("click", () => {
+    $("editGroupBackdrop").classList.add("hidden");
+    document.body.classList.remove("modal-open");
+  });
+  $("editGroupForm")?.addEventListener("submit", saveGroupEdit);
 
   $("backToGroups").addEventListener("click", () => {
     $("groupDetailView").classList.add("hidden");
