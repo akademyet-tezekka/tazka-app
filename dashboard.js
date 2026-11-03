@@ -86,13 +86,13 @@ function showView(name) {
     b.classList.toggle("active", b.dataset.view === name));
 
   const titles = {
-  overview: ["نظرة عامة", "ملخص سريع لأداء الأكاديمية"],
-  students: ["الطلاب", "إدارة بيانات الطلاب"],
-  groups: [currentProfile?.role === "teacher" ? "حلقاتي" : "الحلقات", ""],
-  teachers: ["المعلمون", "إدارة حسابات المعلمين"],
-  attendanceReports: ["تقارير الحضور", "عرض سجلات الحضور والغياب"],
-  statistics: ["الإحصائيات", "إحصائيات المعلمين والحلقات"],
-};
+    overview: ["نظرة عامة", "ملخص سريع لأداء الأكاديمية"],
+    students: ["الطلاب", "إدارة بيانات الطلاب"],
+    groups: [currentProfile?.role === "teacher" ? "حلقاتي" : "الحلقات", ""],
+    teachers: ["المعلمون", "إدارة حسابات المعلمين"],
+    attendanceReports: ["تقارير الحضور", "عرض سجلات الحضور والغياب"],
+    statistics: ["الإحصائيات", "إحصائيات المعلمين والحلقات"],
+  };
   const [t, s] = titles[name] || ["لوحة التحكم", ""];
   $("pageTitle").textContent = t;
   $("pageSub").textContent = s;
@@ -177,6 +177,22 @@ function fillGroupSelects() {
 }
 
 // =====================================================
+// Refresh active group (بعد إضافة/تعديل/حذف طالب)
+// =====================================================
+async function refreshActiveGroup() {
+  if (!activeGroupId) return;
+  const { data } = await db.from("students")
+    .select("id, full_name, birth_date, residence, phone")
+    .eq("group_id", activeGroupId)
+    .order("full_name");
+  if (!data) return;
+  activeGroupStudents = data;
+  $("groupDetailSubtitle").textContent = `${activeGroupStudents.length} طالب`;
+  renderGroupStudents(activeGroupStudents);
+  loadAttendance();
+}
+
+// =====================================================
 // Overview
 // =====================================================
 async function loadOverview() {
@@ -201,6 +217,7 @@ async function loadStudents() {
 
   if (!selected && !search) {
     tbody.innerHTML = '<tr><td colspan="9" class="empty">اختر الحلقة أو أدخل اسم الطالب للبحث.</td></tr>';
+    if (activeGroupId) await refreshActiveGroup();
     return;
   }
 
@@ -221,6 +238,7 @@ async function loadStudents() {
 
   if (!data?.length) {
     tbody.innerHTML = '<tr><td colspan="9" class="empty">لا يوجد طلاب.</td></tr>';
+    if (activeGroupId) await refreshActiveGroup();
     return;
   }
 
@@ -239,6 +257,8 @@ async function loadStudents() {
       <td>${escapeHtml(formatDate(r.registration_date))}</td>
       <td>${escapeHtml(r.notes || "—")}</td>
     </tr>`).join("");
+
+  if (activeGroupId) await refreshActiveGroup();
 }
 
 // =====================================================
@@ -286,7 +306,7 @@ async function addStudent(e) {
   $("addStudentForm").reset();
   setAddStudentModal(false);
   message("تمت إضافة الطالب بنجاح.", "success");
-  loadStudents();
+  await loadStudents();
   loadOverview();
 }
 
@@ -407,7 +427,7 @@ async function saveStudentEdit(e) {
   $("studentEditBackdrop").classList.add("hidden");
   document.body.classList.remove("modal-open");
   message("تم حفظ التعديلات.", "success");
-  loadStudents();
+  await loadStudents();
 }
 
 // =====================================================
@@ -431,7 +451,7 @@ async function deleteStudent() {
 
   setStudentManageModal(false);
   message("تم حذف الطالب.", "success");
-  loadStudents();
+  await loadStudents();
   loadOverview();
 }
 
@@ -510,7 +530,7 @@ async function saveTransfer(e) {
 
   setTransferModal(false);
   message("تم نقل الطالب بنجاح.", "success");
-  loadStudents();
+  await loadStudents();
 }
 
 // =====================================================
