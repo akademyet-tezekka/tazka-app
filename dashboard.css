@@ -509,3 +509,45 @@ body.modal-open{overflow:hidden}
     transition-duration:.01ms!important;
   }
 }
+}
+
+/* شريط إدارة الحلقات */
+.group-management-bar{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  align-items:center;
+  padding:14px;
+  background:linear-gradient(135deg,#f9fcfd,#f0f8f8);
+  border:1px solid #e1ebf2;
+  border-radius:14px;
+  margin-bottom:16px;
+}
+.group-management-bar select{
+  flex:1;
+  min-width:200px;
+  padding:10px 14px;
+  border:1px solid #d7e4ec;
+  border-radius:10px;
+  background:#fff;
+  color:#173750;
+  font:inherit;
+  font-weight:700;
+}
+.group-management-bar .btn{
+  padding:10px 16px;
+  border-radius:10px;
+  font-weight:800;
+  white-space:nowrap;
+}
+
+@media(max-width:600px){
+  .group-management-bar{
+    display:grid;
+    grid-template-columns:1fr;
+  }
+  .group-management-bar select,
+  .group-management-bar .btn{
+    width:100%;
+  }
+}
