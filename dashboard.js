@@ -86,7 +86,6 @@ function showView(name) {
     b.classList.toggle("active", b.dataset.view === name));
 
   const titles = {
-  const titles = {
   overview: ["نظرة عامة", "ملخص سريع لأداء الأكاديمية"],
   students: ["الطلاب", "إدارة بيانات الطلاب"],
   groups: [currentProfile?.role === "teacher" ? "حلقاتي" : "الحلقات", ""],
