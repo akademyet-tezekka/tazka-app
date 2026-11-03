@@ -924,12 +924,26 @@ async function refreshManageTeachers() {
   updateManageTeacherActions();
 }
 
+function openChangeTeacherPassword() {
+  const id = $("manageTeacherSelect").value;
+  const t = window.__teachersMap?.[id];
+  if (!t) { message("اختر معلمًا أولاً.", "error"); return; }
+
+  $("changeTeacherPasswordName").value = t.full_name || "معلم";
+  $("newTeacherPasswordField").value = generatePassword();
+  $("changeTeacherPasswordStatus").textContent = "";
+  $("changeTeacherPasswordBackdrop").classList.remove("hidden");
+  document.body.classList.add("modal-open");
+  setTimeout(() => $("newTeacherPasswordField").focus(), 50);
+}
+
 function updateManageTeacherActions() {
   const id = $("manageTeacherSelect").value;
   const t = window.__teachersMap?.[id];
-  $("manageEditTeacher").classList.toggle("hidden", !t);
-  $("manageToggleTeacher").classList.toggle("hidden", !t);
-  $("manageDeleteTeacher").classList.toggle("hidden", !t);
+  $("manageEditTeacher")?.classList.toggle("hidden", !t);
+  $("manageChangeTeacherPassword")?.classList.toggle("hidden", !t);
+  $("manageToggleTeacher")?.classList.toggle("hidden", !t);
+  $("manageDeleteTeacher")?.classList.toggle("hidden", !t);
   $("manageTeacherStatus").textContent = t
     ? `المعلم المحدد: ${t.full_name || "بلا اسم"} — ${t.is_active ? "نشط" : "معطّل"}`
     : "اختر معلمًا من القائمة.";
@@ -1337,6 +1351,56 @@ function bindEvents() {
     });
   });
 
+  $("manageChangeTeacherPassword")?.addEventListener("click", openChangeTeacherPassword);
+
+  $("closeChangeTeacherPasswordModal")?.addEventListener("click", () => {
+    $("changeTeacherPasswordBackdrop").classList.add("hidden");
+    document.body.classList.remove("modal-open");
+  });
+  $("cancelChangeTeacherPasswordModal")?.addEventListener("click", () => {
+    $("changeTeacherPasswordBackdrop").classList.add("hidden");
+    document.body.classList.remove("modal-open");
+  });
+
+  $("changeTeacherPasswordForm")?.addEventListener("submit", async e => {
+    e.preventDefault();
+    const id = $("manageTeacherSelect").value;
+    const password = $("newTeacherPasswordField").value;
+    const status = $("changeTeacherPasswordStatus");
+
+    if (!id || !password || password.length < 8) {
+      status.textContent = "كلمة المرور يجب أن تكون 8 أحرف على الأقل.";
+      return;
+    }
+
+    const btn = $("saveChangeTeacherPasswordBtn");
+    btn.disabled = true;
+    btn.textContent = "جارٍ التحديث...";
+    status.textContent = "";
+
+    const { data, error } = await db.rpc("update_teacher_password", {
+      p_teacher_id: id,
+      p_new_password: password
+    });
+
+    btn.disabled = false;
+    btn.textContent = "تحديث كلمة المرور";
+
+    if (error) {
+      status.textContent = "خطأ: " + error.message;
+      return;
+    }
+    if (data?.error) {
+      status.textContent = data.error;
+      return;
+    }
+
+    const teacherName = $("changeTeacherPasswordName").value;
+    $("changeTeacherPasswordBackdrop").classList.add("hidden");
+    document.body.classList.remove("modal-open");
+    message(`✅ تم تحديث كلمة مرور ${teacherName}. كلمة المرور الجديدة: ${password}`, "success");
+  });
+
   $("manageToggleTeacher")?.addEventListener("click", async () => {
     const id = $("manageTeacherSelect").value;
     const t = window.__teachersMap?.[id];
@@ -1385,7 +1449,7 @@ function bindEvents() {
     if (e.key !== "Escape") return;
     ["addStudentBackdrop", "studentManageBackdrop", "studentEditBackdrop",
      "transferStudentBackdrop", "createGroupBackdrop", "editGroupBackdrop",
-     "addTeacherBackdrop", "teacherManageBackdrop"].forEach(id => {
+     "addTeacherBackdrop", "teacherManageBackdrop", "changeTeacherPasswordBackdrop"].forEach(id => {
       const el = $(id);
       if (el && !el.classList.contains("hidden")) {
         el.classList.add("hidden");
