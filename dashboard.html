@@ -414,7 +414,32 @@
     </form>
   </section>
 </div>
-
+<!-- تغيير كلمة مرور معلم -->
+<div id="changeTeacherPasswordBackdrop" class="modal-backdrop hidden" aria-hidden="true">
+  <section class="edit-modal" role="dialog" aria-modal="true" aria-labelledby="changeTeacherPasswordTitle">
+    <header class="modal-head">
+      <div><h2 id="changeTeacherPasswordTitle">تغيير كلمة مرور المعلم</h2><p>أدخل كلمة المرور الجديدة.</p></div>
+      <button type="button" class="modal-close" id="closeChangeTeacherPasswordModal" aria-label="إغلاق">×</button>
+    </header>
+    <form id="changeTeacherPasswordForm">
+      <div class="modal-body">
+        <div class="modal-grid">
+          <div class="modal-field wide"><label for="changeTeacherPasswordName">المعلم</label><input id="changeTeacherPasswordName" type="text" readonly style="background:#f5f8fc;color:#526579"></div>
+          <div class="modal-field wide"><label for="newTeacherPasswordField">كلمة المرور الجديدة * (8+)</label><input id="newTeacherPasswordField" type="text" required minlength="8"></div>
+        </div>
+        <p class="modal-hint" style="margin-top:10px">أعطِ المعلم كلمة المرور الجديدة. يستطيع تغييرها لاحقاً من صفحة الدخول.</p>
+        <div id="changeTeacherPasswordStatus" class="modal-hint" style="margin-top:8px;color:#c94350"></div>
+      </div>
+      <footer class="modal-foot">
+        <div class="save-state">راجع قبل الحفظ.</div>
+        <div class="actions">
+          <button type="button" class="btn secondary" id="cancelChangeTeacherPasswordModal">إلغاء</button>
+          <button type="submit" class="btn primary" id="saveChangeTeacherPasswordBtn">تحديث كلمة المرور</button>
+        </div>
+      </footer>
+    </form>
+  </section>
+</div>
 <!-- إضافة معلم -->
 <div id="addTeacherBackdrop" class="modal-backdrop hidden" aria-hidden="true">
   <section class="edit-modal" role="dialog" aria-modal="true" aria-labelledby="addTeacherTitle">
@@ -456,6 +481,7 @@
       <p id="manageTeacherStatus" class="modal-hint" style="margin-top:10px">اختر معلمًا من القائمة.</p>
       <div class="actions" style="margin-top:14px">
         <button type="button" class="btn primary" id="manageEditTeacher">✎ تعديل الاسم</button>
+        <button type="button" class="btn secondary" id="manageChangeTeacherPassword">🔑 تغيير كلمة المرور</button>
         <button type="button" class="btn secondary" id="manageToggleTeacher">تفعيل/تعطيل</button>
         <button type="button" class="btn danger" id="manageDeleteTeacher">حذف</button>
       </div>
