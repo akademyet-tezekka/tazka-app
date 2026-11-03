@@ -815,27 +815,33 @@ async function exportCSV() {
 
   const names = new Map(activeGroupStudents.map(s => [s.id, s.full_name]));
   const labels = { present: "حاضر", absent: "غائب", excused: "غياب بعذر" };
-  const esc = v => '"' + String(v ?? "").replace(/"/g, '""') + '"';
 
-  const rows = [["التاريخ", "الطالب", "الحالة", "الإنجازات", "ملاحظات"].map(esc).join(";")];
-  data.forEach(r => {
-    rows.push([r.attendance_date, names.get(r.student_id) || "—", labels[r.status] || r.status,
-      r.achievements || "", r.note || ""].map(esc).join(";"));
-  });
+  const rows = data.map(r => ({
+    "التاريخ": r.attendance_date,
+    "اسم الطالب": names.get(r.student_id) || "—",
+    "حالة الحضور": labels[r.status] || r.status,
+    "الإنجازات": r.achievements || "",
+    "ملاحظات": r.note || ""
+  }));
 
-  const csv = "\uFEFF" + rows.join("\r\n");
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `حضور-${activeGroupName}-${month}.csv`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
-  message("تم التصدير.", "success");
+  const ws = XLSX.utils.json_to_sheet(rows);
+  ws["!cols"] = [
+    { wch: 12 },
+    { wch: 25 },
+    { wch: 15 },
+    { wch: 30 },
+    { wch: 30 }
+  ];
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "الحضور");
+
+  const safeName = (activeGroupName || "حلقة").trim().replace(/[\\/:*?"<>|]/g, "-");
+  const fileName = `حضور-${safeName}-${month}.xlsx`;
+
+  XLSX.writeFile(wb, fileName);
+  message("تم تصدير ملف Excel بنجاح.", "success");
 }
-
 async function resetMonth() {
   if (currentProfile.role !== "manager") { message("للمدير فقط.", "error"); return; }
   const month = $("attendanceExportMonth").value || ($("attendanceDate").value || todayISO()).slice(0, 7);
