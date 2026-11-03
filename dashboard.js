@@ -938,7 +938,7 @@ async function loadTeachers() {
   tbody.innerHTML = teachers.map(t => `
     <tr>
       <td>${escapeHtml(t.full_name || "—")}</td>
-      <td>—</td>
+      <td>${escapeHtml(t.email || "—")}</td>
       <td>${t.is_active ? '<span class="tag">نشط</span>' : '<span class="group-pill unassigned">معطّل</span>'}</td>
     </tr>`).join("") || '<tr><td colspan="3" class="empty">لا يوجد معلمون.</td></tr>';
 }
