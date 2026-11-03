@@ -442,7 +442,30 @@
     </form>
   </section>
 </div>
-
+<!-- إدارة المعلم -->
+<div id="teacherManageBackdrop" class="modal-backdrop hidden" aria-hidden="true">
+  <section class="edit-modal" role="dialog" aria-modal="true" aria-labelledby="teacherManageTitle">
+    <header class="modal-head">
+      <div><h2 id="teacherManageTitle">إدارة المعلم</h2><p>اختر المعلم ثم الإجراء.</p></div>
+      <button type="button" class="modal-close" id="closeTeacherManageModal" aria-label="إغلاق">×</button>
+    </header>
+    <div class="modal-body">
+      <div class="modal-grid">
+        <div class="modal-field wide"><label for="manageTeacherSelect">اختر المعلم</label><select id="manageTeacherSelect"><option value="">جارٍ التحميل...</option></select></div>
+      </div>
+      <p id="manageTeacherStatus" class="modal-hint" style="margin-top:10px">اختر معلمًا من القائمة.</p>
+      <div class="actions" style="margin-top:14px">
+        <button type="button" class="btn primary" id="manageEditTeacher">✎ تعديل الاسم</button>
+        <button type="button" class="btn secondary" id="manageToggleTeacher">تفعيل/تعطيل</button>
+        <button type="button" class="btn danger" id="manageDeleteTeacher">حذف</button>
+      </div>
+    </div>
+    <footer class="modal-foot">
+      <div class="save-state">سيتم التحقق من صلاحيات الحساب.</div>
+      <div class="actions"><button type="button" class="btn secondary" id="cancelTeacherManageModal">إغلاق</button></div>
+    </footer>
+  </section>
+</div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="./dashboard.js"></script>
 </body>
