@@ -86,13 +86,14 @@ function showView(name) {
     b.classList.toggle("active", b.dataset.view === name));
 
   const titles = {
-    overview: ["نظرة عامة", "ملخص سريع لأداء الأكاديمية"],
-    students: ["الطلاب", "إدارة بيانات الطلاب"],
-    groups: [currentProfile?.role === "teacher" ? "حلقاتي" : "الحلقات", "إدارة الحلقات"],
-    teachers: ["المعلمون", "إدارة حسابات المعلمين"],
-    attendanceReports: ["تقارير الحضور", "عرض سجلات الحضور والغياب"],
-    statistics: ["الإحصائيات", "إحصائيات المعلمين والحلقات"],
-  };
+  const titles = {
+  overview: ["نظرة عامة", "ملخص سريع لأداء الأكاديمية"],
+  students: ["الطلاب", "إدارة بيانات الطلاب"],
+  groups: [currentProfile?.role === "teacher" ? "حلقاتي" : "الحلقات", ""],
+  teachers: ["المعلمون", "إدارة حسابات المعلمين"],
+  attendanceReports: ["تقارير الحضور", "عرض سجلات الحضور والغياب"],
+  statistics: ["الإحصائيات", "إحصائيات المعلمين والحلقات"],
+};
   const [t, s] = titles[name] || ["لوحة التحكم", ""];
   $("pageTitle").textContent = t;
   $("pageSub").textContent = s;
