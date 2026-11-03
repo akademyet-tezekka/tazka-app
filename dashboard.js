@@ -927,8 +927,8 @@ async function loadTeachers() {
   }
 
   const { data, error } = await db.from("profiles")
-    .select("id, full_name, is_active, role")
-    .eq("role", "teacher").order("full_name");
+  .select("id, full_name, is_active, role, email")
+  .eq("role", "teacher").order("full_name");
 
   if (error) { tbody.innerHTML = '<tr><td colspan="3" class="empty">تعذر التحميل.</td></tr>'; return; }
 
