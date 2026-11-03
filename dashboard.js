@@ -582,7 +582,6 @@ async function loadGroups() {
     </article>`;
   }).join("");
 
-  // تعبئة قائمة الاختيار في قسم الإدارة
   const manageSel = $("manageGroupSelect");
   if (manageSel) {
     const prev = manageSel.value;
@@ -876,7 +875,7 @@ async function deleteGroup(id, name) {
 async function loadTeachers() {
   const tbody = $("teachersRows");
   if (currentProfile.role !== "manager") {
-    tbody.innerHTML = '<tr><td colspan="4" class="empty">للمدير فقط.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="3" class="empty">للمدير فقط.</td></tr>';
     return;
   }
 
@@ -884,15 +883,56 @@ async function loadTeachers() {
     .select("id, full_name, is_active, role")
     .eq("role", "teacher").order("full_name");
 
-  if (error) { tbody.innerHTML = '<tr><td colspan="4" class="empty">تعذر التحميل.</td></tr>'; return; }
+  if (error) { tbody.innerHTML = '<tr><td colspan="3" class="empty">تعذر التحميل.</td></tr>'; return; }
 
-  tbody.innerHTML = (data || []).map(t => `
+  const teachers = data || [];
+  window.__teachersMap = Object.fromEntries(teachers.map(t => [t.id, t]));
+
+  tbody.innerHTML = teachers.map(t => `
     <tr>
       <td>${escapeHtml(t.full_name || "—")}</td>
       <td>—</td>
       <td>${t.is_active ? '<span class="tag">نشط</span>' : '<span class="group-pill unassigned">معطّل</span>'}</td>
-      <td><div class="actions"><button class="btn secondary" data-toggle-teacher="${escapeHtml(t.id)}" data-active="${t.is_active}">${t.is_active ? "تعطيل" : "تفعيل"}</button><button class="btn danger" data-delete-teacher="${escapeHtml(t.id)}" data-teacher-name="${escapeHtml(t.full_name || "المعلم")}" title="حذف نهائي"><i class="fa-solid fa-trash"></i></button></div></td>
-    </tr>`).join("") || '<tr><td colspan="4" class="empty">لا يوجد معلمون.</td></tr>';
+    </tr>`).join("") || '<tr><td colspan="3" class="empty">لا يوجد معلمون.</td></tr>';
+}
+
+function setTeacherManageModal(open) {
+  const m = $("teacherManageBackdrop");
+  m.classList.toggle("hidden", !open);
+  m.setAttribute("aria-hidden", String(!open));
+  document.body.classList.toggle("modal-open", open);
+}
+
+async function refreshManageTeachers() {
+  const sel = $("manageTeacherSelect");
+  sel.disabled = true;
+  sel.innerHTML = '<option value="">جارٍ التحميل...</option>';
+
+  const { data, error } = await db.from("profiles")
+    .select("id, full_name, is_active, role")
+    .eq("role", "teacher").order("full_name");
+
+  if (error) { sel.innerHTML = '<option value="">تعذر التحميل</option>'; return; }
+
+  const teachers = data || [];
+  window.__teachersMap = Object.fromEntries(teachers.map(t => [t.id, t]));
+
+  sel.innerHTML = '<option value="">اختر المعلم</option>' +
+    teachers.map(t => `<option value="${escapeHtml(t.id)}">${escapeHtml(t.full_name || "معلم")} ${t.is_active ? "" : "(معطّل)"}</option>`).join("");
+  if (!teachers.length) sel.innerHTML = '<option value="">لا يوجد معلمون</option>';
+  sel.disabled = false;
+  updateManageTeacherActions();
+}
+
+function updateManageTeacherActions() {
+  const id = $("manageTeacherSelect").value;
+  const t = window.__teachersMap?.[id];
+  $("manageEditTeacher").classList.toggle("hidden", !t);
+  $("manageToggleTeacher").classList.toggle("hidden", !t);
+  $("manageDeleteTeacher").classList.toggle("hidden", !t);
+  $("manageTeacherStatus").textContent = t
+    ? `المعلم المحدد: ${t.full_name || "بلا اسم"} — ${t.is_active ? "نشط" : "معطّل"}`
+    : "اختر معلمًا من القائمة.";
 }
 
 async function toggleTeacher(id, active) {
@@ -1269,17 +1309,6 @@ function bindEvents() {
   $("exportMonthlyAttendanceBtn").addEventListener("click", exportCSV);
   $("resetMonthlyAttendanceBtn").addEventListener("click", resetMonth);
 
-  $("teachersRows").addEventListener("click", e => {
-    const delBtn = e.target.closest("[data-delete-teacher]");
-    if (delBtn) {
-      deleteTeacher(delBtn.dataset.deleteTeacher, delBtn.dataset.teacherName);
-      return;
-    }
-    const toggleBtn = e.target.closest("[data-toggle-teacher]");
-    if (!toggleBtn) return;
-    toggleTeacher(toggleBtn.dataset.toggleTeacher, toggleBtn.dataset.active === "true");
-  });
-  // أزرار إدارة المعلمين
   $("openManageTeacherModal")?.addEventListener("click", async () => {
     setTeacherManageModal(true);
     await refreshManageTeachers();
@@ -1322,6 +1351,7 @@ function bindEvents() {
     if (!t) return;
     await deleteTeacher(t.id, t.full_name || "المعلم");
   });
+
   $("openAddTeacherModal").addEventListener("click", () => {
     $("newTeacherPassword").value = generatePassword();
     $("addTeacherStatus").textContent = "";
