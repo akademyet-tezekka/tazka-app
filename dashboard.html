@@ -148,7 +148,7 @@
             <button class="btn secondary" type="button" id="loadAttendanceBtn"><i class="fa-solid fa-rotate"></i> عرض سجل اليوم</button>
             <button class="btn primary" type="button" id="saveAttendanceBtn"><i class="fa-solid fa-floppy-disk"></i> حفظ الحضور</button>
             <div class="field" style="min-width:150px"><label for="attendanceExportMonth">شهر التصدير</label><input id="attendanceExportMonth" type="month"></div>
-            <button class="btn secondary" type="button" id="exportMonthlyAttendanceBtn"><i class="fa-solid fa-file-excel"></i> تصدير CSV</button>
+            <button class="btn secondary" type="button" id="exportMonthlyAttendanceBtn"><i class="fa-solid fa-file-excel"></i> تصدير Excel</button>
             <button class="btn danger hidden" type="button" id="resetMonthlyAttendanceBtn"><i class="fa-solid fa-eraser"></i> تصفير الشهر</button>
           </div>
           <div class="attendance-help">اختر التاريخ، ثم حدّد لكل طالب: حاضر أو غائب أو غياب بعذر.</div>
@@ -494,6 +494,7 @@
   </section>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="./dashboard.js"></script>
 </body>
