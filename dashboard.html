@@ -1,44 +1,500 @@
-/* شريط إدارة الحلقات */
-.group-management-bar{
-  display:flex;
-  gap:8px;
-  flex-wrap:wrap;
-  align-items:center;
-  padding:10px 12px;
-  background:linear-gradient(135deg,#f9fcfd,#f0f8f8);
-  border:1px solid #e1ebf2;
-  border-radius:12px;
-  margin-bottom:14px;
-}
-.group-management-bar select{
-  flex:0 1 180px;
-  min-width:140px;
-  max-width:200px;
-  padding:8px 12px;
-  border:1px solid #d7e4ec;
-  border-radius:9px;
-  background:#fff;
-  color:#173750;
-  font:inherit;
-  font-size:14px;
-  font-weight:700;
-}
-.group-management-bar .btn{
-  padding:8px 14px;
-  border-radius:9px;
-  font-weight:800;
-  font-size:14px;
-  white-space:nowrap;
-}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#10283f">
+  <meta name="description" content="لوحة تحكم أكاديمية تزكى">
+  <title>لوحة التحكم | أكاديمية تزكى</title>
 
-@media(max-width:600px){
-  .group-management-bar{
-    display:grid;
-    grid-template-columns:1fr;
-  }
-  .group-management-bar select,
-  .group-management-bar .btn{
-    width:100%;
-    max-width:100%;
-  }
-}
+  <link rel="icon" type="image/png" href="https://i.imgur.com/gA6y80y.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <link rel="stylesheet" href="./dashboard.css">
+</head>
+<body>
+
+<div class="shell">
+  <aside>
+    <div class="brand">
+      <img class="brand-logo" src="https://i.imgur.com/gA6y80y.png" alt="شعار أكاديمية تزكى">
+      <div>أكاديمية <span>تزكى</span></div>
+    </div>
+
+    <p class="sidebar-welcome" id="sidebarWelcome">جارٍ التحقق...</p>
+
+    <nav class="nav" aria-label="القائمة الرئيسية">
+      <button class="active" data-view="overview"><i class="fa-solid fa-chart-line"></i> نظرة عامة</button>
+      <button data-view="students"><i class="fa-solid fa-user-graduate"></i> الطلاب</button>
+      <button data-view="groups" id="groupsNav"><i class="fa-solid fa-layer-group"></i> الحلقات</button>
+      <button data-view="teachers" id="navTeachers"><i class="fa-solid fa-chalkboard-user"></i> المعلمون</button>
+      <button data-view="attendanceReports"><i class="fa-solid fa-clipboard-check"></i> تقارير الحضور</button>
+      <button data-view="statistics" id="navStats"><i class="fa-solid fa-chart-pie"></i> الإحصائيات</button>
+      <button class="sidebar-logout" id="logoutBtn"><i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج</button>
+    </nav>
+
+    <p class="side-note">بوابة الإدارة<br>تظهر البيانات بحسب صلاحيات الحساب المسجّل.</p>
+  </aside>
+
+  <main>
+    <header class="topbar">
+      <div>
+        <h1 id="pageTitle">نظرة عامة</h1>
+        <p class="sub" id="pageSub">جارٍ تحميل البيانات...</p>
+      </div>
+    </header>
+
+    <div id="notice" class="notice" role="status" aria-live="polite">
+      <span id="noticeText" class="notice-content"></span>
+      <button type="button" id="closeNotice" class="notice-close" aria-label="إغلاق الرسالة">×</button>
+    </div>
+
+    <!-- ===== نظرة عامة ===== -->
+    <section id="overviewView" class="view">
+      <div class="cards">
+        <div class="card"><div class="metric-label">إجمالي الطلاب</div><div class="metric" id="studentsCount">—</div></div>
+        <div class="card"><div class="metric-label">الحلقات</div><div class="metric" id="groupsCount">—</div></div>
+        <div class="card"><div class="metric-label">حسابات المعلمين</div><div class="metric" id="teachersCount">—</div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h2>مرحبًا بك في لوحة الإدارة</h2></div>
+        <p style="line-height:1.9">هذه اللوحة تتيح إدارة الطلاب والحلقات وتتبع الحضور والتقارير. تظهر البيانات بحسب صلاحيات حسابك.</p>
+      </div>
+    </section>
+
+    <!-- ===== الطلاب ===== -->
+    <section id="studentsView" class="view hidden">
+      <div class="panel">
+        <div class="panel-head">
+          <div><h2>إدارة الطلاب</h2><p class="sub">تسجيل طالب جديد أو اختيار طالب لتعديله أو نقله أو حذفه.</p></div>
+        </div>
+        <div class="actions" style="margin-bottom:14px">
+          <button class="btn primary" id="openAddStudentModal" type="button"><i class="fa-solid fa-plus"></i> تسجيل طالب</button>
+          <button class="btn secondary" id="openManageStudentModal" type="button"><i class="fa-solid fa-pen"></i> تعديل طالب</button>
+          <button class="btn secondary" id="openTransferStudentModal" type="button"><i class="fa-solid fa-arrow-right-arrow-left"></i> نقل طالب</button>
+          <button class="btn danger" id="openDeleteStudentModal" type="button"><i class="fa-solid fa-trash"></i> حذف طالب</button>
+        </div>
+        <div class="tools">
+          <select id="studentGroupFilter" aria-label="اختر الحلقة">
+            <option value="">اختر الحلقة لعرض الطلاب</option>
+          </select>
+          <input id="studentSearch" placeholder="ابحث باسم الطالب" aria-label="البحث باسم الطالب">
+          <button class="btn secondary" id="searchStudents" type="button"><i class="fa-solid fa-magnifying-glass"></i> بحث</button>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="table-wrap">
+          <table style="min-width:900px">
+            <thead>
+              <tr>
+                <th>اسم الطالب</th><th>المواليد</th><th>محل الإقامة</th><th>رقم الهاتف</th>
+                <th>الجنس</th><th>الحلقة</th><th>نوع الحلقة</th><th>تاريخ التسجيل</th><th>الملاحظات</th>
+              </tr>
+            </thead>
+            <tbody id="studentsRows">
+              <tr><td colspan="9" class="empty">اختر الحلقة أو أدخل اسم الطالب للبحث.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== الحلقات ===== -->
+    <section id="groupsView" class="view hidden">
+      <div class="panel" id="groupsListPanel">
+        <div class="panel-head">
+          <div><h2>قائمة الحلقات</h2></div>
+          <span class="group-count" id="visibleGroupsCount">— حلقة</span>
+        </div>
+        <div class="group-management-bar">
+          <select id="manageGroupSelect" aria-label="اختر الحلقة لإدارتها">
+            <option value="">اختر الحلقة</option>
+          </select>
+          <button class="btn secondary" id="manageEditGroupBtn" type="button" disabled><i class="fa-solid fa-pen"></i> تعديل</button>
+          <button class="btn danger" id="manageDeleteGroupBtn" type="button" disabled><i class="fa-solid fa-trash"></i> حذف</button>
+          <button class="btn primary" id="openCreateGroupModal" type="button"><i class="fa-solid fa-plus"></i> إضافة حلقة</button>
+        </div>
+        <div class="groups-grid" id="groupsRows"><div class="empty">جارٍ تحميل الحلقات...</div></div>
+      </div>
+
+      <section id="groupDetailView" class="hidden">
+        <div class="panel group-detail-panel">
+          <div class="panel-head">
+            <div>
+              <button type="button" class="btn secondary group-back-btn" id="backToGroups">← العودة للحلقات</button>
+              <h2 id="groupDetailName">طلاب الحلقة</h2>
+              <p class="sub" id="groupDetailSubtitle">جارٍ التحميل...</p>
+            </div>
+            <input id="groupStudentSearch" class="group-student-search" type="search" placeholder="بحث باسم الطالب" aria-label="بحث في طلاب الحلقة">
+          </div>
+          <div class="table-wrap">
+            <table class="group-students-table">
+              <thead><tr><th style="width:60px">#</th><th>اسم الطالب</th><th>المواليد</th><th>محل الإقامة</th><th>رقم الهاتف</th></tr></thead>
+              <tbody id="groupStudentsRows"><tr><td colspan="5" class="empty">جارٍ التحميل...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="panel" id="attendancePanel">
+          <div class="panel-head">
+            <div><h2>الحضور والغياب</h2><p class="sub">سجّل حالة كل طالب ثم احفظ الحضور.</p></div>
+          </div>
+          <div class="attendance-toolbar">
+            <div class="field"><label for="attendanceDate">تاريخ الحضور</label><input id="attendanceDate" type="date"></div>
+            <button class="btn secondary" type="button" id="loadAttendanceBtn"><i class="fa-solid fa-rotate"></i> عرض سجل اليوم</button>
+            <button class="btn primary" type="button" id="saveAttendanceBtn"><i class="fa-solid fa-floppy-disk"></i> حفظ الحضور</button>
+            <div class="field" style="min-width:150px"><label for="attendanceExportMonth">شهر التصدير</label><input id="attendanceExportMonth" type="month"></div>
+            <button class="btn secondary" type="button" id="exportMonthlyAttendanceBtn"><i class="fa-solid fa-file-excel"></i> تصدير CSV</button>
+            <button class="btn danger hidden" type="button" id="resetMonthlyAttendanceBtn"><i class="fa-solid fa-eraser"></i> تصفير الشهر</button>
+          </div>
+          <div class="attendance-help">اختر التاريخ، ثم حدّد لكل طالب: حاضر أو غائب أو غياب بعذر.</div>
+          <div class="table-wrap" style="margin-top:14px">
+            <table class="attendance-table">
+              <thead><tr><th style="width:64px">#</th><th>اسم الطالب</th><th style="width:150px">الحالة</th><th>الإنجازات</th><th>ملاحظات</th></tr></thead>
+              <tbody id="attendanceRows"><tr><td colspan="5" class="empty">جارٍ التحميل...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </section>
+
+    <!-- ===== المعلمون ===== -->
+    <section id="teachersView" class="view hidden">
+      <div class="panel">
+        <div class="panel-head">
+          <div><h2>إدارة المعلمين</h2><p class="sub">إضافة معلم جديد، أو اختيار معلم لتعديله أو حذفه.</p></div>
+        </div>
+        <div class="actions" style="margin-bottom:14px">
+          <button class="btn primary" id="openAddTeacherModal" type="button"><i class="fa-solid fa-plus"></i> إضافة معلم</button>
+          <button class="btn secondary" id="openManageTeacherModal" type="button"><i class="fa-solid fa-pen"></i> تعديل معلم</button>
+          <button class="btn danger" id="openDeleteTeacherModal" type="button"><i class="fa-solid fa-trash"></i> حذف معلم</button>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>اسم المعلم</th><th>البريد الإلكتروني</th><th>الحالة</th></tr></thead>
+            <tbody id="teachersRows"><tr><td colspan="3" class="empty">جارٍ التحميل...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== تقارير الحضور ===== -->
+    <section id="attendanceReportsView" class="view hidden">
+      <div class="cards">
+        <div class="card"><div class="metric-label">سجلات الحضور</div><div class="metric" id="reportPresentCount">—</div></div>
+        <div class="card"><div class="metric-label">سجلات الغياب</div><div class="metric" id="reportAbsentCount">—</div></div>
+        <div class="card"><div class="metric-label">غياب بعذر</div><div class="metric" id="reportExcusedCount">—</div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><div><h2>تقارير الحضور والغياب</h2><p class="sub">اختر فترة زمنية وحلقة لعرض السجلات.</p></div></div>
+        <div class="form-grid">
+          <div class="field"><label for="reportStartDate">من تاريخ</label><input type="date" id="reportStartDate"></div>
+          <div class="field"><label for="reportEndDate">إلى تاريخ</label><input type="date" id="reportEndDate"></div>
+          <div class="field"><label for="reportGroupFilter">الحلقة</label><select id="reportGroupFilter"><option value="">كل الحلقات</option></select></div>
+          <div class="field"><label for="reportStudentSearch">اسم الطالب</label><input id="reportStudentSearch" placeholder="ابحث باسم الطالب"></div>
+          <div class="field"><label for="reportStatusFilter">الحالة</label><select id="reportStatusFilter"><option value="">كل الحالات</option><option value="present">حاضر</option><option value="absent">غائب</option><option value="excused">غائب بعذر</option></select></div>
+        </div>
+        <div class="actions" style="margin-top:14px">
+          <button class="btn primary" type="button" id="runAttendanceReport">عرض التقرير</button>
+          <button class="btn secondary" type="button" id="resetAttendanceReport">إعادة ضبط</button>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h2>النتائج</h2><span class="group-count" id="attendanceReportRowsCount">0 سجل</span></div>
+        <div class="table-wrap">
+          <table style="min-width:760px">
+            <thead><tr><th>التاريخ</th><th>اسم الطالب</th><th>الحلقة</th><th>الحالة</th><th>الإنجازات</th><th>ملاحظات</th></tr></thead>
+            <tbody id="attendanceReportRows"><tr><td colspan="6" class="empty">اختر الفترة ثم اضغط «عرض التقرير».</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== الإحصائيات ===== -->
+    <section id="statisticsView" class="view hidden">
+      <div class="cards">
+        <div class="card"><div class="metric-label">إجمالي الطلاب</div><div class="metric" id="statsStudentsCount">—</div></div>
+        <div class="card"><div class="metric-label">الذكور</div><div class="metric" id="statsBoysCount">—</div></div>
+        <div class="card"><div class="metric-label">الإناث</div><div class="metric" id="statsGirlsCount">—</div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h2>إحصائيات المعلمين والحلقات</h2><button class="btn secondary" id="refreshStatsBtn" type="button">تحديث</button></div>
+        <div class="table-wrap">
+          <table style="min-width:850px">
+            <thead><tr><th>المعلم</th><th>الحلقة</th><th>إجمالي</th><th>ذكور</th><th>إناث</th><th>ملاحظات</th></tr></thead>
+            <tbody id="statisticsRows"><tr><td colspan="6" class="empty">جارٍ التحميل...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <p class="footer">❴ أكاديمية تزكّى • للتعليم والتدريب والإرشاد ❵</p>
+  </main>
+</div>
+
+<!-- ============ Modals ============ -->
+
+<!-- إضافة طالب -->
+<div id="addStudentBackdrop" class="modal-backdrop hidden" aria-hidden="true">
+  <section class="edit-modal" role="dialog" aria-modal="true" aria-labelledby="addStudentModalTitle">
+    <header class="modal-head">
+      <div><h2 id="addStudentModalTitle">تسجيل طالب جديد</h2><p>أدخل بيانات الطالب ثم اضغط حفظ.</p></div>
+      <button type="button" class="modal-close" id="closeAddStudentModal" aria-label="إغلاق">×</button>
+    </header>
+    <form id="addStudentForm">
+      <div class="modal-body">
+        <div class="modal-grid">
+          <div class="modal-field"><label for="newStudentName">اسم الطالب *</label><input id="newStudentName" required maxlength="150" placeholder="اسم الطالب"></div>
+          <div class="modal-field"><label for="newStudentGender">الجنس</label><select id="newStudentGender"><option value="">غير محدد</option><option value="male">ذكر</option><option value="female">أنثى</option></select></div>
+          <div class="modal-field"><label for="newStudentBirthDate">المواليد</label><input id="newStudentBirthDate" type="date"></div>
+          <div class="modal-field"><label for="newStudentResidence">محل الإقامة</label><input id="newStudentResidence" maxlength="250"></div>
+          <div class="modal-field"><label for="newStudentPhone">رقم الهاتف</label><input id="newStudentPhone" type="tel" maxlength="30" inputmode="tel"></div>
+          <div class="modal-field"><label for="newStudentGroup">الحلقة</label><select id="newStudentGroup"><option value="">بدون حلقة</option></select></div>
+          <div class="modal-field"><label for="newStudentGroupType">نوع الحلقة</label><input id="newStudentGroupType" maxlength="120"></div>
+          <div class="modal-field"><label for="newStudentRegistrationDate">تاريخ التسجيل</label><input id="newStudentRegistrationDate" type="date"></div>
+          <div class="modal-field wide"><label for="newStudentNotes">ملاحظات</label><textarea id="newStudentNotes" rows="2" maxlength="3000" placeholder="ملاحظات عن الطالب (اختياري)"></textarea></div>
+        </div>
+      </div>
+      <footer class="modal-foot">
+        <div class="save-state">راجع البيانات قبل الحفظ.</div>
+        <div class="actions">
+          <button type="button" class="btn secondary" id="cancelAddStudentModal">إلغاء</button>
+          <button type="submit" class="btn primary" id="addStudentBtn">حفظ الطالب</button>
+        </div>
+      </footer>
+    </form>
+  </section>
+</div>
+
+<!-- إدارة الطالب -->
+<div id="studentManageBackdrop" class="modal-backdrop hidden" aria-hidden="true">
+  <section class="edit-modal" role="dialog" aria-modal="true" aria-labelledby="studentManageTitle">
+    <header class="modal-head">
+      <div><h2 id="studentManageTitle">إدارة الطالب</h2><p>اختر الحلقة والطالب ثم الإجراء.</p></div>
+      <button type="button" class="modal-close" id="closeStudentManageModal" aria-label="إغلاق">×</button>
+    </header>
+    <div class="modal-body">
+      <div class="modal-grid">
+        <div class="modal-field"><label for="manageStudentGroup">الحلقة</label><select id="manageStudentGroup"><option value="">كل الحلقات</option></select></div>
+        <div class="modal-field"><label for="manageStudentSelect">الطالب</label><select id="manageStudentSelect"><option value="">اختر الطالب</option></select></div>
+      </div>
+      <p id="manageStudentStatus" class="modal-hint" style="margin-top:10px">اختر الحلقة ثم الطالب.</p>
+      <div class="actions" style="margin-top:14px">
+        <button type="button" class="btn primary" id="manageEditStudent">✎ تعديل</button>
+        <button type="button" class="btn danger" id="manageDeleteStudent">حذف</button>
+      </div>
+    </div>
+    <footer class="modal-foot">
+      <div class="save-state">سيتم التحقق من صلاحيات الحساب.</div>
+      <div class="actions"><button type="button" class="btn secondary" id="cancelStudentManageModal">إغلاق</button></div>
+    </footer>
+  </section>
+</div>
+
+<!-- تعديل طالب -->
+<div id="studentEditBackdrop" class="modal-backdrop hidden" aria-hidden="true">
+  <section class="edit-modal" role="dialog" aria-modal="true" aria-labelledby="editModalTitle">
+    <header class="modal-head">
+      <div><h2 id="editModalTitle">تعديل بيانات الطالب</h2><p>حدّث البيانات ثم احفظ.</p></div>
+      <button type="button" class="modal-close" id="closeStudentModal" aria-label="إغلاق">×</button>
+    </header>
+    <form id="studentEditForm">
+      <div class="modal-body">
+        <input type="hidden" id="editingStudentId">
+        <div class="modal-grid">
+          <div class="modal-field"><label for="editStudentName">اسم الطالب *</label><input id="editStudentName" required maxlength="150"></div>
+          <div class="modal-field"><label for="editStudentGender">الجنس</label><select id="editStudentGender"><option value="">غير محدد</option><option value="male">ذكر</option><option value="female">أنثى</option></select></div>
+          <div class="modal-field"><label for="editStudentBirthDate">المواليد</label><input id="editStudentBirthDate" type="date"></div>
+          <div class="modal-field"><label for="editStudentResidence">محل الإقامة</label><input id="editStudentResidence" maxlength="250"></div>
+          <div class="modal-field"><label for="editStudentPhone">الهاتف</label><input id="editStudentPhone" type="tel" maxlength="30"></div>
+          <div class="modal-field"><label for="editStudentGroup">الحلقة</label><select id="editStudentGroup"><option value="">بدون حلقة</option></select></div>
+          <div class="modal-field"><label for="editStudentGroupType">نوع الحلقة</label><input id="editStudentGroupType" maxlength="120"></div>
+          <div class="modal-field"><label for="editStudentRegistrationDate">تاريخ التسجيل</label><input id="editStudentRegistrationDate" type="date"></div>
+          <div class="modal-field wide"><label for="editStudentNotes">الملاحظات</label><textarea id="editStudentNotes" rows="2" maxlength="3000" placeholder="ملاحظات (اختياري)"></textarea></div>
+        </div>
+        <div id="studentEditStatus" class="modal-hint" style="margin-top:8px"></div>
+      </div>
+      <footer class="modal-foot">
+        <div class="save-state" id="studentSaveState">راجع البيانات قبل الحفظ.</div>
+        <div class="actions">
+          <button type="button" class="btn secondary" id="cancelStudentModal">إلغاء</button>
+          <button type="submit" class="btn primary" id="saveStudentChanges">حفظ</button>
+        </div>
+      </footer>
+    </form>
+  </section>
+</div>
+
+<!-- نقل طالب -->
+<div id="transferStudentBackdrop" class="modal-backdrop hidden" aria-hidden="true">
+  <section class="edit-modal" role="dialog" aria-modal="true" aria-labelledby="transferStudentTitle">
+    <header class="modal-head">
+      <div><h2 id="transferStudentTitle">نقل طالب بين الحلقات</h2><p>اختر الحلقة الحالية والطالب والحلقة الجديدة.</p></div>
+      <button type="button" class="modal-close" id="closeTransferStudentModal" aria-label="إغلاق">×</button>
+    </header>
+    <form id="transferStudentForm">
+      <div class="modal-body">
+        <div class="modal-grid">
+          <div class="modal-field"><label for="transferFromGroup">الحلقة الحالية *</label><select id="transferFromGroup" required><option value="">اختر</option><option value="__unassigned__">بدون حلقة</option></select></div>
+          <div class="modal-field"><label for="transferStudentSelect">الطالب *</label><select id="transferStudentSelect" required disabled><option value="">اختر الحلقة أولاً</option></select></div>
+          <div class="modal-field wide"><label for="transferToGroup">الحلقة الجديدة *</label><select id="transferToGroup" required><option value="">اختر</option></select></div>
+        </div>
+        <p id="transferStudentStatus" class="modal-hint" style="margin-top:8px">سيتم تغيير الحلقة المرتبطة بالطالب فقط.</p>
+      </div>
+      <footer class="modal-foot">
+        <div class="save-state">راجع قبل التأكيد.</div>
+        <div class="actions">
+          <button type="button" class="btn secondary" id="cancelTransferStudentModal">إلغاء</button>
+          <button type="submit" class="btn primary" id="saveTransferStudentBtn">تأكيد النقل</button>
+        </div>
+      </footer>
+    </form>
+  </section>
+</div>
+
+<!-- إضافة حلقة -->
+<div id="createGroupBackdrop" class="modal-backdrop hidden" aria-hidden="true">
+  <section class="edit-modal" role="dialog" aria-modal="true" aria-labelledby="createGroupModalTitle">
+    <header class="modal-head">
+      <div><h2 id="createGroupModalTitle">إضافة حلقة جديدة</h2><p>أدخل اسم الحلقة ونوعها.</p></div>
+      <button type="button" class="modal-close" id="closeCreateGroupModal" aria-label="إغلاق">×</button>
+    </header>
+    <form id="createGroupForm">
+      <div class="modal-body">
+        <div class="modal-grid">
+          <div class="modal-field"><label for="newGroupName">اسم الحلقة *</label><input id="newGroupName" required maxlength="150"></div>
+          <div class="modal-field"><label for="newGroupType">نوع الحلقة *</label><input id="newGroupType" required maxlength="120" placeholder="تحفيظ، تجويد، تعليمية..."></div>
+          <div class="modal-field" id="newGroupTeacherField"><label for="newGroupTeacher">المعلم المسؤول *</label><select id="newGroupTeacher"><option value="">جارٍ التحميل...</option></select></div>
+          <div class="modal-field"><label for="newGroupLogo">رابط شعار (اختياري)</label><input id="newGroupLogo" type="url" maxlength="1000" placeholder="https://..."></div>
+        </div>
+      </div>
+      <footer class="modal-foot">
+        <div class="save-state">يمكنك ترك الشعار فارغًا.</div>
+        <div class="actions">
+          <button type="button" class="btn secondary" id="cancelCreateGroupModal">إلغاء</button>
+          <button type="submit" class="btn primary" id="createGroupBtn">إنشاء الحلقة</button>
+        </div>
+      </footer>
+    </form>
+  </section>
+</div>
+
+<!-- تعديل حلقة -->
+<div id="editGroupBackdrop" class="modal-backdrop hidden" aria-hidden="true">
+  <section class="edit-modal" role="dialog" aria-modal="true" aria-labelledby="editGroupTitle">
+    <header class="modal-head">
+      <div><h2 id="editGroupTitle">تعديل الحلقة</h2><p>عدّل الاسم والنوع والصورة.</p></div>
+      <button type="button" class="modal-close" id="closeEditGroupModal" aria-label="إغلاق">×</button>
+    </header>
+    <form id="editGroupForm">
+      <div class="modal-body">
+        <input type="hidden" id="editingGroupId">
+        <div class="modal-grid">
+          <div class="modal-field"><label for="editGroupName">اسم الحلقة *</label><input id="editGroupName" required maxlength="150"></div>
+          <div class="modal-field"><label for="editGroupType">نوع الحلقة *</label><input id="editGroupType" required maxlength="120"></div>
+          <div class="modal-field wide"><label for="editGroupLogo">رابط شعار (اختياري)</label><input id="editGroupLogo" type="url" maxlength="1000" placeholder="https://..."></div>
+        </div>
+        <p id="editGroupStatus" class="modal-hint" style="margin-top:10px"></p>
+      </div>
+      <footer class="modal-foot">
+        <div class="save-state">احفظ بعد المراجعة.</div>
+        <div class="actions">
+          <button type="button" class="btn secondary" id="cancelEditGroupModal">إلغاء</button>
+          <button type="submit" class="btn primary" id="saveEditGroupBtn">حفظ</button>
+        </div>
+      </footer>
+    </form>
+  </section>
+</div>
+
+<!-- تغيير كلمة مرور معلم -->
+<div id="changeTeacherPasswordBackdrop" class="modal-backdrop hidden" aria-hidden="true" style="z-index:1100">
+  <section class="edit-modal" role="dialog" aria-modal="true" aria-labelledby="changeTeacherPasswordTitle">
+    <header class="modal-head">
+      <div><h2 id="changeTeacherPasswordTitle">تغيير كلمة مرور المعلم</h2><p>أدخل كلمة المرور الجديدة.</p></div>
+      <button type="button" class="modal-close" id="closeChangeTeacherPasswordModal" aria-label="إغلاق">×</button>
+    </header>
+    <form id="changeTeacherPasswordForm">
+      <div class="modal-body">
+        <div class="modal-grid">
+          <div class="modal-field wide"><label for="changeTeacherPasswordName">المعلم</label><input id="changeTeacherPasswordName" type="text" readonly style="background:#f5f8fc;color:#526579"></div>
+          <div class="modal-field wide"><label for="newTeacherPasswordField">كلمة المرور الجديدة * (8+)</label><input id="newTeacherPasswordField" type="text" required minlength="8"></div>
+        </div>
+        <p class="modal-hint" style="margin-top:10px">أعطِ المعلم كلمة المرور الجديدة. يستطيع تغييرها لاحقاً من صفحة الدخول.</p>
+        <div id="changeTeacherPasswordStatus" class="modal-hint" style="margin-top:8px;color:#c94350"></div>
+      </div>
+      <footer class="modal-foot">
+        <div class="save-state">راجع قبل الحفظ.</div>
+        <div class="actions">
+          <button type="button" class="btn secondary" id="cancelChangeTeacherPasswordModal">إلغاء</button>
+          <button type="submit" class="btn primary" id="saveChangeTeacherPasswordBtn">تحديث كلمة المرور</button>
+        </div>
+      </footer>
+    </form>
+  </section>
+</div>
+
+<!-- إضافة معلم -->
+<div id="addTeacherBackdrop" class="modal-backdrop hidden" aria-hidden="true">
+  <section class="edit-modal" role="dialog" aria-modal="true" aria-labelledby="addTeacherTitle">
+    <header class="modal-head">
+      <div><h2 id="addTeacherTitle">إضافة معلم جديد</h2><p>أدخل بيانات الحساب.</p></div>
+      <button type="button" class="modal-close" id="closeAddTeacherModal" aria-label="إغلاق">×</button>
+    </header>
+    <form id="addTeacherForm">
+      <div class="modal-body">
+        <div class="modal-grid">
+          <div class="modal-field wide"><label for="newTeacherName">اسم المعلم *</label><input id="newTeacherName" required maxlength="150"></div>
+          <div class="modal-field wide"><label for="newTeacherEmail">البريد الإلكتروني *</label><input id="newTeacherEmail" type="email" required></div>
+          <div class="modal-field wide"><label for="newTeacherPassword">كلمة المرور المؤقتة * (8+)</label><input id="newTeacherPassword" type="text" required minlength="8"></div>
+        </div>
+        <p class="modal-hint" style="margin-top:10px">أعطِ المعلم هذه البيانات، ويستطيع تغيير كلمة المرور من صفحة الدخول.</p>
+        <div id="addTeacherStatus" class="modal-hint" style="margin-top:8px;color:#c94350"></div>
+      </div>
+      <footer class="modal-foot">
+        <div class="save-state">راجع قبل الإنشاء.</div>
+        <div class="actions">
+          <button type="button" class="btn secondary" id="cancelAddTeacherModal">إلغاء</button>
+          <button type="submit" class="btn primary" id="createTeacherBtn">إنشاء الحساب</button>
+        </div>
+      </footer>
+    </form>
+  </section>
+</div>
+
+<!-- إدارة المعلم -->
+<div id="teacherManageBackdrop" class="modal-backdrop hidden" aria-hidden="true">
+  <section class="edit-modal" role="dialog" aria-modal="true" aria-labelledby="teacherManageTitle">
+    <header class="modal-head">
+      <div><h2 id="teacherManageTitle">إدارة المعلم</h2><p>اختر المعلم ثم الإجراء.</p></div>
+      <button type="button" class="modal-close" id="closeTeacherManageModal" aria-label="إغلاق">×</button>
+    </header>
+    <div class="modal-body">
+      <div class="modal-grid">
+        <div class="modal-field wide"><label for="manageTeacherSelect">اختر المعلم</label><select id="manageTeacherSelect"><option value="">جارٍ التحميل...</option></select></div>
+      </div>
+      <p id="manageTeacherStatus" class="modal-hint" style="margin-top:10px">اختر معلمًا من القائمة.</p>
+      <div class="actions" style="margin-top:14px">
+        <button type="button" class="btn primary" id="manageEditTeacher">✎ تعديل الاسم</button>
+        <button type="button" class="btn secondary" id="manageChangeTeacherPassword">🔑 تغيير كلمة المرور</button>
+        <button type="button" class="btn secondary" id="manageToggleTeacher">تفعيل/تعطيل</button>
+        <button type="button" class="btn danger" id="manageDeleteTeacher">حذف</button>
+      </div>
+    </div>
+    <footer class="modal-foot">
+      <div class="save-state">سيتم التحقق من صلاحيات الحساب.</div>
+      <div class="actions"><button type="button" class="btn secondary" id="cancelTeacherManageModal">إغلاق</button></div>
+    </footer>
+  </section>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="./dashboard.js"></script>
+</body>
+</html>
