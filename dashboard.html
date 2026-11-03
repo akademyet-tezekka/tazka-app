@@ -165,20 +165,26 @@
     </section>
 
     <!-- ===== المعلمون ===== -->
-    <section id="teachersView" class="view hidden">
-      <div class="panel">
-        <div class="panel-head">
-          <div><h2>إدارة المعلمين</h2><p class="sub">إضافة معلم جديد، أو تفعيل/تعطيل الحسابات.</p></div>
-          <button class="btn primary" id="openAddTeacherModal" type="button"><i class="fa-solid fa-plus"></i> إضافة معلم</button>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>اسم المعلم</th><th>البريد الإلكتروني</th><th>الحالة</th><th>إجراءات</th></tr></thead>
-            <tbody id="teachersRows"><tr><td colspan="4" class="empty">جارٍ التحميل...</td></tr></tbody>
-          </table>
-        </div>
-      </div>
-    </section>
+   <section id="teachersView" class="view hidden">
+  <div class="panel">
+    <div class="panel-head">
+      <div><h2>إدارة المعلمين</h2><p class="sub">إضافة معلم جديد، أو اختيار معلم لتعديله أو حذفه.</p></div>
+    </div>
+    <div class="actions" style="margin-bottom:14px">
+      <button class="btn primary" id="openAddTeacherModal" type="button"><i class="fa-solid fa-plus"></i> إضافة معلم</button>
+      <button class="btn secondary" id="openManageTeacherModal" type="button"><i class="fa-solid fa-pen"></i> تعديل معلم</button>
+      <button class="btn danger" id="openDeleteTeacherModal" type="button"><i class="fa-solid fa-trash"></i> حذف معلم</button>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>اسم المعلم</th><th>البريد الإلكتروني</th><th>الحالة</th></tr></thead>
+        <tbody id="teachersRows"><tr><td colspan="3" class="empty">جارٍ التحميل...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</section>
 
     <!-- ===== تقارير الحضور ===== -->
     <section id="attendanceReportsView" class="view hidden">
