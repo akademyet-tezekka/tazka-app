@@ -842,22 +842,69 @@ async function exportCSV() {
   XLSX.writeFile(wb, fileName);
   message("تم تصدير ملف Excel بنجاح.", "success");
 }
-async function resetMonth() {
-  if (currentProfile.role !== "manager") { message("للمدير فقط.", "error"); return; }
-  const month = $("attendanceExportMonth").value || ($("attendanceDate").value || todayISO()).slice(0, 7);
-  if (!/^\d{4}-\d{2}$/.test(month)) { message("اختر شهرًا.", "error"); return; }
 
+// =====================================================
+// Reset month (الحلقة المفتوحة فقط)
+// =====================================================
+async function resetMonth() {
+  // 1. التحقق من وجود حلقة مفتوحة
+  if (!activeGroupId) {
+    message("افتح حلقة أولاً.", "error");
+    return;
+  }
+
+  // 2. التحقق من الدور
+  if (!["manager", "teacher"].includes(currentProfile.role)) {
+    message("لا تملك صلاحية التصفير.", "error");
+    return;
+  }
+
+  const month = $("attendanceExportMonth").value || ($("attendanceDate").value || todayISO()).slice(0, 7);
+  if (!/^\d{4}-\d{2}$/.test(month)) {
+    message("اختر شهرًا صحيحًا.", "error");
+    return;
+  }
+
+  // 3. التحقق: المعلم لا يصفّر إلا حلقاته
+  const group = cachedGroups.find(g => g.id === activeGroupId);
+  if (currentProfile.role === "teacher" && group?.teacher_id !== currentProfile.id) {
+    message("يمكنك تصفير حلقاتك فقط.", "error");
+    return;
+  }
+
+  // 4. التأكيد
+  const groupName = activeGroupName || "الحلقة";
   if (!await confirmDialog({
-    title: "تصفير الحضور",
-    text: `سيتم حذف كل سجلات الحضور لشهر ${month}. لا يمكن التراجع.`,
+    title: "تصفير حضور الحلقة",
+    text: `سيتم حذف كل سجلات الحضور لشهر ${month} في حلقة «${groupName}» فقط. لا يمكن التراجع.`,
     confirmText: "نعم، احذف الكل",
     danger: true
   })) return;
 
-  const { data, error } = await db.rpc("reset_attendance_month", { p_month: month });
-  if (error) { message("تعذر التصفير: " + error.message, "error"); return; }
-  message(`تم حذف ${data} سجل.`, "success");
-  loadAttendance();
+  const btn = $("resetMonthlyAttendanceBtn");
+  const oldText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = "جارٍ الحذف...";
+
+  try {
+    const { data, error } = await db.rpc("reset_attendance_month_for_group", {
+      p_month: month,
+      p_group_id: activeGroupId
+    });
+
+    if (error) {
+      message("تعذر التصفير: " + error.message, "error");
+      return;
+    }
+
+    message(`تم حذف ${data} سجل من حلقة «${groupName}» لشهر ${month}.`, "success");
+    loadAttendance();
+  } catch (err) {
+    message("خطأ: " + (err?.message || "غير معروف"), "error");
+  } finally {
+    btn.disabled = false;
+    btn.textContent = oldText;
+  }
 }
 
 // =====================================================
