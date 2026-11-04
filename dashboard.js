@@ -132,14 +132,13 @@ async function requireProfile() {
   $("sidebarWelcome").textContent =
     `مرحبًا ${profile.full_name || user.email} — ${profile.role === "manager" ? "مدير" : "معلم"}`;
 
-  if (profile.role === "teacher") {
+   if (profile.role === "teacher") {
     $("navTeachers")?.classList.add("hidden");
     $("navStats")?.classList.add("hidden");
     const gNav = $("groupsNav");
     if (gNav) gNav.innerHTML = '<i class="fa-solid fa-layer-group"></i> حلقاتي';
-  } else {
-    $("resetMonthlyAttendanceBtn")?.classList.remove("hidden");
   }
+  // الزر يظهر للجميع — الدالة resetMonth تتحقق من الصلاحيات
 
   return true;
 }
