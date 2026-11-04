@@ -196,17 +196,89 @@ async function refreshActiveGroup() {
 // Overview
 // =====================================================
 async function loadOverview() {
-  if (currentProfile.role !== "manager") return;
-  const [s, g, t] = await Promise.all([
-    db.from("students").select("id", { count: "exact", head: true }),
-    db.from("groups").select("id", { count: "exact", head: true }),
-    db.from("profiles").select("id", { count: "exact", head: true }).eq("role", "teacher")
-  ]);
-  if (!s.error) $("studentsCount").textContent = s.count ?? 0;
-  if (!g.error) $("groupsCount").textContent = g.count ?? 0;
-  if (!t.error) $("teachersCount").textContent = t.count ?? 0;
-}
+  if (!currentProfile) return;
 
+  // ====== للمدير: كل البيانات ======
+  if (currentProfile.role === "manager") {
+    const [s, g, t] = await Promise.all([
+      db.from("students").select("id", { count: "exact", head: true }),
+      db.from("groups").select("id", { count: "exact", head: true }),
+      db.from("profiles").select("id", { count: "exact", head: true }).eq("role", "teacher")
+    ]);
+    if (!s.error) $("studentsCount").textContent = s.count ?? 0;
+    if (!g.error) $("groupsCount").textContent = g.count ?? 0;
+    if (!t.error) $("teachersCount").textContent = t.count ?? 0;
+    return;
+  }
+
+  // ====== للمعلم: طلابه وحلقاته فقط + التاريخ ======
+
+  // 1. حلقات المعلم
+  const { data: myGroups, error: gErr } = await db
+    .from("groups")
+    .select("id")
+    .eq("teacher_id", currentProfile.id);
+
+  const groupIds = (myGroups || []).map(g => g.id);
+
+  // 2. عدد الحلقات
+  $("groupsCount").textContent = groupIds.length;
+
+  // 3. عدد الطلاب في حلقاته
+  if (groupIds.length > 0) {
+    const { count, error: sErr } = await db
+      .from("students")
+      .select("id", { count: "exact", head: true })
+      .in("group_id", groupIds);
+    $("studentsCount").textContent = sErr ? "—" : (count ?? 0);
+  } else {
+    $("studentsCount").textContent = "0";
+  }
+
+  // 4. بطاقة "حسابات المعلمين" → تحويلها إلى "تاريخ اليوم"
+  const teacherCard = $("teachersCount");
+  if (teacherCard) {
+    // تغيير التسمية (فوق الرقم)
+    const label = teacherCard.parentElement.querySelector(".metric-label");
+    if (label) label.textContent = "تاريخ اليوم";
+
+    // حساب التاريخ الهجري والميلادي
+    const now = new Date();
+
+    // ميلادي بصيغة عربية
+    const gregorian = now.toLocaleDateString("ar-EG", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric"
+    });
+
+    // هجري
+    let hijri = "";
+    try {
+      hijri = now.toLocaleDateString("ar-SA-u-ca-islamic", {
+        year: "numeric",
+        month: "long",
+        day: "numeric"
+      });
+    } catch {
+      hijri = "";
+    }
+
+    // عرض التاريخين (بحجم أصغر)
+    teacherCard.style.fontSize = "15px";
+    teacherCard.style.lineHeight = "1.5";
+    teacherCard.style.fontWeight = "700";
+    teacherCard.style.display = "flex";
+    teacherCard.style.flexDirection = "column";
+    teacherCard.style.gap = "4px";
+
+    teacherCard.innerHTML = `
+      <span style="color:var(--navy);font-size:14px">${escapeHtml(gregorian)}</span>
+      ${hijri ? `<span style="color:var(--teal-dark);font-size:13px">${escapeHtml(hijri)} هـ</span>` : ""}
+    `;
+  }
+}
 // =====================================================
 // Students
 // =====================================================
