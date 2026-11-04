@@ -833,6 +833,10 @@ async function exportCSV() {
     { wch: 30 }
   ];
 
+  // ✅ جعل الورقة من اليمين إلى اليسار (RTL)
+  if (!ws["!views"]) ws["!views"] = [];
+  ws["!views"].push({ RTL: true });
+
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "الحضور");
 
