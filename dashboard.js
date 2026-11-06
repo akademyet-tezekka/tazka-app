@@ -76,6 +76,27 @@ function generatePassword() {
 }
 
 // =====================================================
+// نسخة احتياطية Excel قبل الحذف
+// =====================================================
+function downloadBackup(data, filename) {
+  if (!data || !data.length) return false;
+  try {
+    const ws = XLSX.utils.json_to_sheet(data);
+    ws["!cols"] = Object.keys(data[0]).map(() => ({ wch: 20 }));
+    if (!ws["!views"]) ws["!views"] = [];
+    ws["!views"].push({ RTL: true });
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "نسخة احتياطية");
+    XLSX.writeFile(wb, filename);
+    return true;
+  } catch (err) {
+    console.error("backup failed:", err);
+    return false;
+  }
+}
+
+// =====================================================
 // View switching
 // =====================================================
 function showView(name) {
@@ -137,7 +158,6 @@ async function requireProfile() {
     $("navStats")?.classList.add("hidden");
     const gNav = $("groupsNav");
     if (gNav) gNav.innerHTML = '<i class="fa-solid fa-layer-group"></i> حلقاتي';
-    // إخفاء فلتر المعلمين عن المعلم
     const teacherFilter = $("manageTeacherFilter");
     if (teacherFilter) teacherFilter.style.display = "none";
   }
@@ -177,9 +197,6 @@ function fillGroupSelects() {
   });
 }
 
-// =====================================================
-// تحميل قائمة المعلمين في فلتر الحلقات (للمدير فقط)
-// =====================================================
 async function loadTeachersForFilter() {
   const sel = $("manageTeacherFilter");
   if (!sel) return;
@@ -202,9 +219,6 @@ async function loadTeachersForFilter() {
   if ([...sel.options].some(o => o.value === prev)) sel.value = prev;
 }
 
-// =====================================================
-// Refresh active group (بعد إضافة/تعديل/حذف طالب)
-// =====================================================
 async function refreshActiveGroup() {
   if (!activeGroupId) return;
   const { data } = await db.from("students")
@@ -224,7 +238,6 @@ async function refreshActiveGroup() {
 async function loadOverview() {
   if (!currentProfile) return;
 
-  // ====== للمدير: كل البيانات ======
   if (currentProfile.role === "manager") {
     const [s, g, t] = await Promise.all([
       db.from("students").select("id", { count: "exact", head: true }),
@@ -237,31 +250,20 @@ async function loadOverview() {
     return;
   }
 
-  // ====== للمعلم: طلابه وحلقاته فقط + التاريخ ======
-
-  // 1. حلقات المعلم
   const { data: myGroups } = await db
-    .from("groups")
-    .select("id")
-    .eq("teacher_id", currentProfile.id);
+    .from("groups").select("id").eq("teacher_id", currentProfile.id);
 
   const groupIds = (myGroups || []).map(g => g.id);
-
-  // 2. عدد الحلقات
   $("groupsCount").textContent = groupIds.length;
 
-  // 3. عدد الطلاب في حلقاته
   if (groupIds.length > 0) {
     const { count, error: sErr } = await db
-      .from("students")
-      .select("id", { count: "exact", head: true })
-      .in("group_id", groupIds);
+      .from("students").select("id", { count: "exact", head: true }).in("group_id", groupIds);
     $("studentsCount").textContent = sErr ? "—" : (count ?? 0);
   } else {
     $("studentsCount").textContent = "0";
   }
 
-  // 4. بطاقة "حسابات المعلمين" → تحويلها إلى "تاريخ اليوم"
   const teacherCard = $("teachersCount");
   if (teacherCard) {
     const label = teacherCard.parentElement.querySelector(".metric-label");
@@ -271,7 +273,6 @@ async function loadOverview() {
     const gregorian = now.toLocaleDateString("ar-EG", {
       weekday: "long", year: "numeric", month: "long", day: "numeric"
     });
-
     let hijri = "";
     try {
       hijri = now.toLocaleDateString("ar-SA-u-ca-islamic", {
@@ -279,13 +280,7 @@ async function loadOverview() {
       });
     } catch {}
 
-    teacherCard.style.fontSize = "15px";
-    teacherCard.style.lineHeight = "1.5";
-    teacherCard.style.fontWeight = "700";
-    teacherCard.style.display = "flex";
-    teacherCard.style.flexDirection = "column";
-    teacherCard.style.gap = "4px";
-
+    teacherCard.style.cssText = "font-size:15px;line-height:1.5;font-weight:700;display:flex;flex-direction:column;gap:4px";
     teacherCard.innerHTML = `
       <span style="color:var(--navy);font-size:14px">${escapeHtml(gregorian)}</span>
       ${hijri ? `<span style="color:var(--teal-dark);font-size:13px">${escapeHtml(hijri)} هـ</span>` : ""}
@@ -501,14 +496,8 @@ async function saveStudentEdit(e) {
   btn.disabled = false;
   btn.textContent = "حفظ";
 
-  if (error) {
-    $("studentEditStatus").textContent = "تعذر الحفظ: " + error.message;
-    return;
-  }
-  if (!data?.length) {
-    $("studentEditStatus").textContent = "لم يتم التحديث — تحقق من الصلاحيات.";
-    return;
-  }
+  if (error) { $("studentEditStatus").textContent = "تعذر الحفظ: " + error.message; return; }
+  if (!data?.length) { $("studentEditStatus").textContent = "لم يتم التحديث — تحقق من الصلاحيات."; return; }
 
   $("studentEditBackdrop").classList.add("hidden");
   document.body.classList.remove("modal-open");
@@ -517,26 +506,51 @@ async function saveStudentEdit(e) {
 }
 
 // =====================================================
-// Delete student
+// Delete student — مع نسخة احتياطية
 // =====================================================
 async function deleteStudent() {
   const id = $("manageStudentSelect").value;
   const row = window.__manageStudentsMap?.[id];
   if (!row) { message("اختر طالبًا أولاً.", "error"); return; }
 
+  // 1. جلب سجلات الحضور للطالب
+  const { data: attRecords } = await db
+    .from("attendance_records")
+    .select("attendance_date, status, achievements, note")
+    .eq("student_id", id)
+    .order("attendance_date");
+
+  // 2. إنشاء نسخة احتياطية
+  if (attRecords?.length) {
+    const labels = { present: "حاضر", absent: "غائب", excused: "غياب بعذر" };
+    const backupRows = attRecords.map(r => ({
+      "اسم الطالب": row.full_name || "—",
+      "التاريخ": r.attendance_date,
+      "الحالة": labels[r.status] || r.status,
+      "الإنجازات": r.achievements || "",
+      "ملاحظات": r.note || ""
+    }));
+    const safeName = (row.full_name || "طالب").replace(/[\\/:*?"<>|]/g, "-");
+    downloadBackup(backupRows, `نسخة-طالب-${safeName}-${todayISO()}.xlsx`);
+    await new Promise(r => setTimeout(r, 800));
+  }
+
+  // 3. التأكيد
   if (!await confirmDialog({
     title: "حذف الطالب",
-    text: `هل تريد حذف «${row.full_name || "الطالب"}» نهائيًا؟`,
+    text: `هل تريد حذف «${row.full_name || "الطالب"}» نهائيًا؟` +
+          (attRecords?.length ? ` (تم تنزيل نسخة احتياطية تضم ${attRecords.length} سجل حضور).` : ""),
     confirmText: "نعم، احذف",
     danger: true
   })) return;
 
+  // 4. الحذف
   const { data, error } = await db.from("students").delete().eq("id", id).select("id");
   if (error) { message("تعذر الحذف: " + error.message, "error"); return; }
   if (!data?.length) { message("لم يتم الحذف — تحقق من الصلاحيات.", "error"); return; }
 
   setStudentManageModal(false);
-  message("تم حذف الطالب.", "success");
+  message("تم حذف الطالب. النسخة الاحتياطية محفوظة في مجلد التنزيلات.", "success");
   await loadStudents();
   loadOverview();
 }
@@ -639,7 +653,6 @@ async function loadGroups() {
 
   cachedGroups = data || [];
 
-  // فلترة حسب المعلم المختار (للمدير فقط)
   const teacherFilterValue = $("manageTeacherFilter")?.value || "";
   let displayedGroups = cachedGroups;
   if (currentProfile.role === "manager" && teacherFilterValue) {
@@ -760,9 +773,7 @@ async function saveGroupEdit(e) {
   btn.textContent = "جارٍ الحفظ...";
 
   const { data, error } = await db.from("groups").update({
-    name,
-    group_type: type,
-    logo_url: logo || null
+    name, group_type: type, logo_url: logo || null
   }).eq("id", id).select("id");
 
   btn.disabled = false;
@@ -919,10 +930,7 @@ async function exportCSV() {
   }));
 
   const ws = XLSX.utils.json_to_sheet(rows);
-  ws["!cols"] = [
-    { wch: 12 }, { wch: 25 }, { wch: 15 }, { wch: 30 }, { wch: 30 }
-  ];
-
+  ws["!cols"] = [{ wch: 12 }, { wch: 25 }, { wch: 15 }, { wch: 30 }, { wch: 30 }];
   if (!ws["!views"]) ws["!views"] = [];
   ws["!views"].push({ RTL: true });
 
@@ -930,14 +938,12 @@ async function exportCSV() {
   XLSX.utils.book_append_sheet(wb, ws, "الحضور");
 
   const safeName = (activeGroupName || "حلقة").trim().replace(/[\\/:*?"<>|]/g, "-");
-  const fileName = `حضور-${safeName}-${month}.xlsx`;
-
-  XLSX.writeFile(wb, fileName);
+  XLSX.writeFile(wb, `حضور-${safeName}-${month}.xlsx`);
   message("تم تصدير ملف Excel بنجاح.", "success");
 }
 
 // =====================================================
-// Reset month (الحلقة المفتوحة فقط)
+// Reset month — مع نسخة احتياطية
 // =====================================================
 async function resetMonth() {
   if (!activeGroupId) { message("افتح حلقة أولاً.", "error"); return; }
@@ -954,24 +960,71 @@ async function resetMonth() {
   }
 
   const groupName = activeGroupName || "الحلقة";
-  if (!await confirmDialog({
-    title: "تصفير حضور الحلقة",
-    text: `سيتم حذف كل سجلات الحضور لشهر ${month} في حلقة «${groupName}» فقط. لا يمكن التراجع.`,
-    confirmText: "نعم، احذف الكل",
-    danger: true
-  })) return;
-
   const btn = $("resetMonthlyAttendanceBtn");
   const oldText = btn.textContent;
   btn.disabled = true;
-  btn.textContent = "جارٍ الحذف...";
+  btn.textContent = "جارٍ تجهيز النسخة الاحتياطية...";
 
   try {
+    // 1. جلب كل سجلات الشهر (قبل الحذف)
+    const start = month + "-01";
+    const end = new Date(Number(month.slice(0, 4)), Number(month.slice(5, 7)), 1).toISOString().slice(0, 10);
+
+    const { data: records, error: fetchErr } = await db
+      .from("attendance_records")
+      .select("student_id, attendance_date, status, achievements, note")
+      .eq("group_id", activeGroupId)
+      .gte("attendance_date", start)
+      .lt("attendance_date", end)
+      .order("attendance_date");
+
+    if (fetchErr) { message("تعذر جلب السجلات: " + fetchErr.message, "error"); return; }
+    if (!records?.length) { message("لا يوجد سجلات في هذا الشهر.", "info"); return; }
+
+    // 2. تجهيز البيانات
+    const names = new Map(activeGroupStudents.map(s => [s.id, s.full_name]));
+    const labels = { present: "حاضر", absent: "غائب", excused: "غياب بعذر" };
+    const backupRows = records.map(r => ({
+      "التاريخ": r.attendance_date,
+      "اسم الطالب": names.get(r.student_id) || "—",
+      "الحالة": labels[r.status] || r.status,
+      "الإنجازات": r.achievements || "",
+      "ملاحظات": r.note || ""
+    }));
+
+    // 3. تنزيل الملف
+    const safeName = groupName.trim().replace(/[\\/:*?"<>|]/g, "-");
+    const ok = downloadBackup(backupRows, `نسخة-احتياطية-${safeName}-${month}.xlsx`);
+
+    if (!ok) {
+      message("تعذر إنشاء النسخة الاحتياطية — تم إلغاء الحذف.", "error");
+      return;
+    }
+
+    await new Promise(r => setTimeout(r, 800));
+
+    // 4. التأكيد
+    btn.textContent = "بانتظار التأكيد...";
+    const confirmed = await confirmDialog({
+      title: "تأكيد الحذف بعد النسخة الاحتياطية",
+      text: `تم تنزيل نسخة احتياطية (${records.length} سجل). هل تريد الآن حذف سجلات شهر ${month} في حلقة «${groupName}»؟`,
+      confirmText: "نعم، احذف الآن",
+      danger: true
+    });
+
+    if (!confirmed) {
+      message("أُلغي الحذف — النسخة الاحتياطية محفوظة عندك.", "info");
+      return;
+    }
+
+    // 5. الحذف
+    btn.textContent = "جارٍ الحذف...";
     const { data, error } = await db.rpc("reset_attendance_month_for_group", {
       p_month: month, p_group_id: activeGroupId
     });
+
     if (error) { message("تعذر التصفير: " + error.message, "error"); return; }
-    message(`تم حذف ${data} سجل من حلقة «${groupName}» لشهر ${month}.`, "success");
+    message(`✅ تم حذف ${data} سجل. النسخة الاحتياطية في مجلد التنزيلات.`, "success");
     loadAttendance();
   } catch (err) {
     message("خطأ: " + (err?.message || "غير معروف"), "error");
@@ -982,7 +1035,7 @@ async function resetMonth() {
 }
 
 // =====================================================
-// Delete group
+// Delete group — مع نسخة احتياطية
 // =====================================================
 async function deleteGroup(id, name) {
   if (!["manager", "teacher"].includes(currentProfile.role)) {
@@ -993,32 +1046,53 @@ async function deleteGroup(id, name) {
   if (currentProfile.role === "teacher" && group.teacher_id !== currentProfile.id) {
     message("يمكنك حذف حلقاتك فقط.", "error"); return;
   }
+
+  // 1. جلب الطلاب
+  const { data: students } = await db
+    .from("students")
+    .select("full_name, birth_date, residence, phone, gender, notes")
+    .eq("group_id", id);
+
+  if ((students?.length || 0) > 0) {
+    message(`لا يمكن حذف الحلقة — تحتوي على ${students.length} طالب. انقلهم أولاً.`, "error");
+    return;
+  }
+
+  // 2. جلب سجلات الحضور
+  const { data: attendance } = await db
+    .from("attendance_records")
+    .select("attendance_date, status, achievements, note")
+    .eq("group_id", id)
+    .order("attendance_date");
+
+  if ((attendance?.length || 0) > 0) {
+    // نسخة احتياطية
+    const labels = { present: "حاضر", absent: "غائب", excused: "غياب بعذر" };
+    const backupRows = attendance.map(r => ({
+      "التاريخ": r.attendance_date,
+      "الحالة": labels[r.status] || r.status,
+      "الإنجازات": r.achievements || "",
+      "ملاحظات": r.note || ""
+    }));
+    const safeName = (name || "حلقة").replace(/[\\/:*?"<>|]/g, "-");
+    downloadBackup(backupRows, `نسخة-حلقة-${safeName}-${todayISO()}.xlsx`);
+    await new Promise(r => setTimeout(r, 800));
+  }
+
+  // 3. التأكيد
   if (!await confirmDialog({
     title: "حذف الحلقة",
-    text: `سيتم حذف «${name}» فقط إذا كانت فارغة من الطلاب وسجلات الحضور. متابعة؟`,
-    confirmText: "نعم، احذف", danger: true
+    text: `هل تريد حذف «${name}»؟` +
+          ((attendance?.length || 0) > 0 ? ` (تم تنزيل نسخة احتياطية تضم ${attendance.length} سجل حضور — سيتم حذف الحلقة نهائياً).` : ""),
+    confirmText: "نعم، احذف",
+    danger: true
   })) return;
 
-  const { count: studentCount, error: scErr } = await db
-    .from("students").select("id", { count: "exact", head: true }).eq("group_id", id);
-  if (scErr) { message("تعذر التحقق: " + scErr.message, "error"); return; }
-  if ((studentCount || 0) > 0) {
-    message(`لا يمكن حذف الحلقة — تحتوي على ${studentCount} طالب.`, "error"); return;
-  }
-
-  const { count: attCount, error: acErr } = await db
-    .from("attendance_records").select("id", { count: "exact", head: true }).eq("group_id", id);
-  if (acErr && !/does not exist|schema cache/i.test(acErr.message || "")) {
-    message("تعذر التحقق من سجلات الحضور: " + acErr.message, "error"); return;
-  }
-  if ((attCount || 0) > 0) {
-    message("لا يمكن حذف الحلقة — تحتوي على سجلات حضور.", "error"); return;
-  }
-
+  // 4. الحذف
   const { data, error } = await db.from("groups").delete().eq("id", id).select("id");
   if (error) { message("تعذر الحذف: " + error.message, "error"); return; }
   if (!data?.length) { message("لم يتم الحذف — تحقق من صلاحياتك.", "error"); return; }
-  message("تم حذف الحلقة بنجاح.", "success");
+  message("تم حذف الحلقة بنجاح. النسخة الاحتياطية محفوظة.", "success");
   loadGroups();
   loadOverview();
 }
@@ -1418,7 +1492,6 @@ function bindEvents() {
     await openGroupDetail(viewBtn.dataset.viewGroup, viewBtn.dataset.groupName);
   });
 
-  // فلتر المعلم في صفحة الحلقات (للمدير فقط)
   $("manageTeacherFilter")?.addEventListener("change", () => {
     loadGroups();
   });
