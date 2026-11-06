@@ -132,13 +132,15 @@ async function requireProfile() {
   $("sidebarWelcome").textContent =
     `مرحبًا ${profile.full_name || user.email} — ${profile.role === "manager" ? "مدير" : "معلم"}`;
 
-   if (profile.role === "teacher") {
+  if (profile.role === "teacher") {
     $("navTeachers")?.classList.add("hidden");
     $("navStats")?.classList.add("hidden");
     const gNav = $("groupsNav");
     if (gNav) gNav.innerHTML = '<i class="fa-solid fa-layer-group"></i> حلقاتي';
+    // إخفاء فلتر المعلمين عن المعلم
+    const teacherFilter = $("manageTeacherFilter");
+    if (teacherFilter) teacherFilter.style.display = "none";
   }
-  // الزر يظهر للجميع — الدالة resetMonth تتحقق من الصلاحيات
 
   return true;
 }
@@ -173,6 +175,31 @@ function fillGroupSelects() {
     el.innerHTML = html;
     if ([...el.options].some(o => o.value === prev)) el.value = prev;
   });
+}
+
+// =====================================================
+// تحميل قائمة المعلمين في فلتر الحلقات (للمدير فقط)
+// =====================================================
+async function loadTeachersForFilter() {
+  const sel = $("manageTeacherFilter");
+  if (!sel) return;
+  if (currentProfile?.role !== "manager") {
+    sel.style.display = "none";
+    return;
+  }
+  sel.style.display = "";
+
+  const { data, error } = await db.from("profiles")
+    .select("id, full_name")
+    .eq("role", "teacher")
+    .order("full_name");
+
+  if (error) return;
+
+  const prev = sel.value;
+  sel.innerHTML = '<option value="">كل المعلمين</option>' +
+    (data || []).map(t => `<option value="${escapeHtml(t.id)}">${escapeHtml(t.full_name || "معلم")}</option>`).join("");
+  if ([...sel.options].some(o => o.value === prev)) sel.value = prev;
 }
 
 // =====================================================
@@ -213,7 +240,7 @@ async function loadOverview() {
   // ====== للمعلم: طلابه وحلقاته فقط + التاريخ ======
 
   // 1. حلقات المعلم
-  const { data: myGroups, error: gErr } = await db
+  const { data: myGroups } = await db
     .from("groups")
     .select("id")
     .eq("teacher_id", currentProfile.id);
@@ -237,34 +264,21 @@ async function loadOverview() {
   // 4. بطاقة "حسابات المعلمين" → تحويلها إلى "تاريخ اليوم"
   const teacherCard = $("teachersCount");
   if (teacherCard) {
-    // تغيير التسمية (فوق الرقم)
     const label = teacherCard.parentElement.querySelector(".metric-label");
     if (label) label.textContent = "تاريخ اليوم";
 
-    // حساب التاريخ الهجري والميلادي
     const now = new Date();
-
-    // ميلادي بصيغة عربية
     const gregorian = now.toLocaleDateString("ar-EG", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric"
+      weekday: "long", year: "numeric", month: "long", day: "numeric"
     });
 
-    // هجري
     let hijri = "";
     try {
       hijri = now.toLocaleDateString("ar-SA-u-ca-islamic", {
-        year: "numeric",
-        month: "long",
-        day: "numeric"
+        year: "numeric", month: "long", day: "numeric"
       });
-    } catch {
-      hijri = "";
-    }
+    } catch {}
 
-    // عرض التاريخين (بحجم أصغر)
     teacherCard.style.fontSize = "15px";
     teacherCard.style.lineHeight = "1.5";
     teacherCard.style.fontWeight = "700";
@@ -278,6 +292,7 @@ async function loadOverview() {
     `;
   }
 }
+
 // =====================================================
 // Students
 // =====================================================
@@ -623,10 +638,18 @@ async function loadGroups() {
   }
 
   cachedGroups = data || [];
-  fillGroupSelects();
-  $("visibleGroupsCount").textContent = `${cachedGroups.length} حلقة`;
 
-  if (!cachedGroups.length) {
+  // فلترة حسب المعلم المختار (للمدير فقط)
+  const teacherFilterValue = $("manageTeacherFilter")?.value || "";
+  let displayedGroups = cachedGroups;
+  if (currentProfile.role === "manager" && teacherFilterValue) {
+    displayedGroups = cachedGroups.filter(g => g.teacher_id === teacherFilterValue);
+  }
+
+  fillGroupSelects();
+  $("visibleGroupsCount").textContent = `${displayedGroups.length} حلقة`;
+
+  if (!displayedGroups.length) {
     container.innerHTML = '<div class="empty">لا توجد حلقات.</div>';
     const manageSel = $("manageGroupSelect");
     if (manageSel) {
@@ -648,7 +671,7 @@ async function loadGroups() {
   const counts = {};
   (students || []).forEach(s => { if (s.group_id) counts[s.group_id] = (counts[s.group_id] || 0) + 1; });
 
-  container.innerHTML = cachedGroups.map(g => {
+  container.innerHTML = displayedGroups.map(g => {
     const cnt = counts[g.id] || 0;
     const teacher = names[g.teacher_id] || "غير مسند";
     const icon = g.logo_url && !g.logo_url.startsWith("emoji:")
@@ -677,7 +700,7 @@ async function loadGroups() {
   if (manageSel) {
     const prev = manageSel.value;
     manageSel.innerHTML = '<option value="">اختر الحلقة التي تريد إدارتها</option>' +
-      cachedGroups
+      displayedGroups
         .filter(g => currentProfile.role === "manager" || g.teacher_id === currentProfile.id)
         .map(g => `<option value="${escapeHtml(g.id)}">${escapeHtml(g.name || "حلقة")}</option>`)
         .join("");
@@ -897,14 +920,9 @@ async function exportCSV() {
 
   const ws = XLSX.utils.json_to_sheet(rows);
   ws["!cols"] = [
-    { wch: 12 },
-    { wch: 25 },
-    { wch: 15 },
-    { wch: 30 },
-    { wch: 30 }
+    { wch: 12 }, { wch: 25 }, { wch: 15 }, { wch: 30 }, { wch: 30 }
   ];
 
-  // ✅ جعل الورقة من اليمين إلى اليسار (RTL)
   if (!ws["!views"]) ws["!views"] = [];
   ws["!views"].push({ RTL: true });
 
@@ -922,32 +940,19 @@ async function exportCSV() {
 // Reset month (الحلقة المفتوحة فقط)
 // =====================================================
 async function resetMonth() {
-  // 1. التحقق من وجود حلقة مفتوحة
-  if (!activeGroupId) {
-    message("افتح حلقة أولاً.", "error");
-    return;
-  }
-
-  // 2. التحقق من الدور
+  if (!activeGroupId) { message("افتح حلقة أولاً.", "error"); return; }
   if (!["manager", "teacher"].includes(currentProfile.role)) {
-    message("لا تملك صلاحية التصفير.", "error");
-    return;
+    message("لا تملك صلاحية التصفير.", "error"); return;
   }
 
   const month = $("attendanceExportMonth").value || ($("attendanceDate").value || todayISO()).slice(0, 7);
-  if (!/^\d{4}-\d{2}$/.test(month)) {
-    message("اختر شهرًا صحيحًا.", "error");
-    return;
-  }
+  if (!/^\d{4}-\d{2}$/.test(month)) { message("اختر شهرًا صحيحًا.", "error"); return; }
 
-  // 3. التحقق: المعلم لا يصفّر إلا حلقاته
   const group = cachedGroups.find(g => g.id === activeGroupId);
   if (currentProfile.role === "teacher" && group?.teacher_id !== currentProfile.id) {
-    message("يمكنك تصفير حلقاتك فقط.", "error");
-    return;
+    message("يمكنك تصفير حلقاتك فقط.", "error"); return;
   }
 
-  // 4. التأكيد
   const groupName = activeGroupName || "الحلقة";
   if (!await confirmDialog({
     title: "تصفير حضور الحلقة",
@@ -963,15 +968,9 @@ async function resetMonth() {
 
   try {
     const { data, error } = await db.rpc("reset_attendance_month_for_group", {
-      p_month: month,
-      p_group_id: activeGroupId
+      p_month: month, p_group_id: activeGroupId
     });
-
-    if (error) {
-      message("تعذر التصفير: " + error.message, "error");
-      return;
-    }
-
+    if (error) { message("تعذر التصفير: " + error.message, "error"); return; }
     message(`تم حذف ${data} سجل من حلقة «${groupName}» لشهر ${month}.`, "success");
     loadAttendance();
   } catch (err) {
@@ -987,58 +986,38 @@ async function resetMonth() {
 // =====================================================
 async function deleteGroup(id, name) {
   if (!["manager", "teacher"].includes(currentProfile.role)) {
-    message("لا تملك صلاحية حذف الحلقات.", "error");
-    return;
+    message("لا تملك صلاحية حذف الحلقات.", "error"); return;
   }
-
   const group = cachedGroups.find(g => g.id === id);
   if (!group) { message("الحلقة غير موجودة.", "error"); return; }
-
   if (currentProfile.role === "teacher" && group.teacher_id !== currentProfile.id) {
-    message("يمكنك حذف حلقاتك فقط.", "error");
-    return;
+    message("يمكنك حذف حلقاتك فقط.", "error"); return;
   }
-
   if (!await confirmDialog({
     title: "حذف الحلقة",
     text: `سيتم حذف «${name}» فقط إذا كانت فارغة من الطلاب وسجلات الحضور. متابعة؟`,
-    confirmText: "نعم، احذف",
-    danger: true
+    confirmText: "نعم، احذف", danger: true
   })) return;
 
   const { count: studentCount, error: scErr } = await db
-    .from("students")
-    .select("id", { count: "exact", head: true })
-    .eq("group_id", id);
-
+    .from("students").select("id", { count: "exact", head: true }).eq("group_id", id);
   if (scErr) { message("تعذر التحقق: " + scErr.message, "error"); return; }
   if ((studentCount || 0) > 0) {
-    message(`لا يمكن حذف الحلقة — تحتوي على ${studentCount} طالب. انقلهم أولاً.`, "error");
-    return;
+    message(`لا يمكن حذف الحلقة — تحتوي على ${studentCount} طالب.`, "error"); return;
   }
 
   const { count: attCount, error: acErr } = await db
-    .from("attendance_records")
-    .select("id", { count: "exact", head: true })
-    .eq("group_id", id);
-
+    .from("attendance_records").select("id", { count: "exact", head: true }).eq("group_id", id);
   if (acErr && !/does not exist|schema cache/i.test(acErr.message || "")) {
-    message("تعذر التحقق من سجلات الحضور: " + acErr.message, "error");
-    return;
+    message("تعذر التحقق من سجلات الحضور: " + acErr.message, "error"); return;
   }
   if ((attCount || 0) > 0) {
-    message("لا يمكن حذف الحلقة — تحتوي على سجلات حضور.", "error");
-    return;
+    message("لا يمكن حذف الحلقة — تحتوي على سجلات حضور.", "error"); return;
   }
 
   const { data, error } = await db.from("groups").delete().eq("id", id).select("id");
-
   if (error) { message("تعذر الحذف: " + error.message, "error"); return; }
-  if (!data?.length) {
-    message("لم يتم الحذف — تحقق من صلاحياتك.", "error");
-    return;
-  }
-
+  if (!data?.length) { message("لم يتم الحذف — تحقق من صلاحياتك.", "error"); return; }
   message("تم حذف الحلقة بنجاح.", "success");
   loadGroups();
   loadOverview();
@@ -1053,11 +1032,9 @@ async function loadTeachers() {
     tbody.innerHTML = '<tr><td colspan="3" class="empty">للمدير فقط.</td></tr>';
     return;
   }
-
   const { data, error } = await db.from("profiles")
-  .select("id, full_name, is_active, role, email")
-  .eq("role", "teacher").order("full_name");
-
+    .select("id, full_name, is_active, role, email")
+    .eq("role", "teacher").order("full_name");
   if (error) { tbody.innerHTML = '<tr><td colspan="3" class="empty">تعذر التحميل.</td></tr>'; return; }
 
   const teachers = data || [];
@@ -1140,30 +1117,17 @@ async function toggleTeacher(id, active) {
 
 async function deleteTeacher(id, name) {
   if (currentProfile.role !== "manager") {
-    message("حذف المعلمين متاح للمدير فقط.", "error");
-    return;
+    message("حذف المعلمين متاح للمدير فقط.", "error"); return;
   }
-
   if (!await confirmDialog({
     title: "حذف حساب المعلم",
     text: `سيتم حذف حساب «${name}» نهائياً. لا يمكن التراجع.`,
-    confirmText: "نعم، احذف",
-    danger: true
+    confirmText: "نعم، احذف", danger: true
   })) return;
 
-  const { data, error } = await db.rpc("delete_teacher_account", {
-    p_teacher_id: id
-  });
-
-  if (error) {
-    message("تعذر الحذف: " + error.message, "error");
-    return;
-  }
-  if (data?.error) {
-    message(data.error, "error");
-    return;
-  }
-
+  const { data, error } = await db.rpc("delete_teacher_account", { p_teacher_id: id });
+  if (error) { message("تعذر الحذف: " + error.message, "error"); return; }
+  if (data?.error) { message(data.error, "error"); return; }
   message("تم حذف حساب المعلم.", "success");
   loadTeachers();
   loadOverview();
@@ -1178,8 +1142,7 @@ async function createTeacher(e) {
   const status = $("addTeacherStatus");
 
   if (!name || !email || password.length < 8) {
-    status.textContent = "أكمل البيانات (كلمة المرور 8+).";
-    return;
+    status.textContent = "أكمل البيانات (كلمة المرور 8+)."; return;
   }
 
   btn.disabled = true;
@@ -1187,22 +1150,14 @@ async function createTeacher(e) {
   status.textContent = "";
 
   const { data, error } = await db.rpc("create_teacher_account", {
-    p_full_name: name,
-    p_email: email,
-    p_password: password
+    p_full_name: name, p_email: email, p_password: password
   });
 
   btn.disabled = false;
   btn.textContent = "إنشاء الحساب";
 
-  if (error) {
-    status.textContent = "خطأ: " + error.message;
-    return;
-  }
-  if (data?.error) {
-    status.textContent = data.error;
-    return;
-  }
+  if (error) { status.textContent = "خطأ: " + error.message; return; }
+  if (data?.error) { status.textContent = data.error; return; }
 
   $("addTeacherForm").reset();
   $("addTeacherBackdrop").classList.add("hidden");
@@ -1295,8 +1250,7 @@ async function loadStatistics() {
   ]);
 
   if (tRes.error || gRes.error || sRes.error) {
-    tbody.innerHTML = '<tr><td colspan="6" class="empty">تعذر التحميل.</td></tr>';
-    return;
+    tbody.innerHTML = '<tr><td colspan="6" class="empty">تعذر التحميل.</td></tr>'; return;
   }
 
   const teachers = tRes.data || [];
@@ -1308,10 +1262,7 @@ async function loadStatistics() {
 
   teachers.forEach(t => {
     const tGroups = groups.filter(g => g.teacher_id === t.id);
-    if (!tGroups.length) {
-      rows.push({ teacher: t.full_name, group: "—", students: [] });
-      return;
-    }
+    if (!tGroups.length) { rows.push({ teacher: t.full_name, group: "—", students: [] }); return; }
     tGroups.forEach(g => {
       const gStudents = students.filter(s => s.group_id === g.id);
       rows.push({ teacher: t.full_name, group: g.name, students: gStudents });
@@ -1467,6 +1418,11 @@ function bindEvents() {
     await openGroupDetail(viewBtn.dataset.viewGroup, viewBtn.dataset.groupName);
   });
 
+  // فلتر المعلم في صفحة الحلقات (للمدير فقط)
+  $("manageTeacherFilter")?.addEventListener("change", () => {
+    loadGroups();
+  });
+
   $("manageGroupSelect")?.addEventListener("change", updateManageGroupButtons);
 
   $("manageEditGroupBtn")?.addEventListener("click", async () => {
@@ -1564,21 +1520,14 @@ function bindEvents() {
     status.textContent = "";
 
     const { data, error } = await db.rpc("update_teacher_password", {
-      p_teacher_id: id,
-      p_new_password: password
+      p_teacher_id: id, p_new_password: password
     });
 
     btn.disabled = false;
     btn.textContent = "تحديث كلمة المرور";
 
-    if (error) {
-      status.textContent = "خطأ: " + error.message;
-      return;
-    }
-    if (data?.error) {
-      status.textContent = data.error;
-      return;
-    }
+    if (error) { status.textContent = "خطأ: " + error.message; return; }
+    if (data?.error) { status.textContent = data.error; return; }
 
     const teacherName = $("changeTeacherPasswordName").value;
     $("changeTeacherPasswordBackdrop").classList.add("hidden");
@@ -1653,6 +1602,7 @@ function bindEvents() {
     if (!ok) return;
 
     await loadGroupsCache();
+    await loadTeachersForFilter();
     fillGroupSelects();
 
     bindEvents();
