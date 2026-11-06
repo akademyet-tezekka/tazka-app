@@ -111,13 +111,16 @@
           <span class="group-count" id="visibleGroupsCount">— حلقة</span>
         </div>
         <div class="group-management-bar">
-          <select id="manageGroupSelect" aria-label="اختر الحلقة لإدارتها">
-            <option value="">اختر الحلقة</option>
-          </select>
-          <button class="btn secondary" id="manageEditGroupBtn" type="button" disabled><i class="fa-solid fa-pen"></i> تعديل</button>
-          <button class="btn danger" id="manageDeleteGroupBtn" type="button" disabled><i class="fa-solid fa-trash"></i> حذف</button>
-          <button class="btn primary" id="openCreateGroupModal" type="button"><i class="fa-solid fa-plus"></i> إضافة حلقة</button>
-        </div>
+        <select id="manageTeacherFilter" aria-label="اختر المعلم لتصفية حلقاته">
+        <option value="">كل المعلمين</option>
+        </select>
+        <select id="manageGroupSelect" aria-label="اختر الحلقة لإدارتها">
+        <option value="">اختر الحلقة</option>
+  </select>
+  <button class="btn secondary" id="manageEditGroupBtn" type="button" disabled><i class="fa-solid fa-pen"></i> تعديل</button>
+  <button class="btn danger" id="manageDeleteGroupBtn" type="button" disabled><i class="fa-solid fa-trash"></i> حذف</button>
+  <button class="btn primary" id="openCreateGroupModal" type="button"><i class="fa-solid fa-plus"></i> إضافة حلقة</button>
+</div>
         <div class="groups-grid" id="groupsRows"><div class="empty">جارٍ تحميل الحلقات...</div></div>
       </div>
 
