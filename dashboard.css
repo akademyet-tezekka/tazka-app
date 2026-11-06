@@ -526,8 +526,9 @@ body.modal-open{overflow:hidden}
   margin-bottom:16px;
 }
 .group-management-bar select{
-  flex:1;
-  min-width:200px;
+  flex:1 1 0;
+  min-width:150px;
+  max-width:240px;
   padding:10px 14px;
   border:1px solid #d7e4ec;
   border-radius:10px;
@@ -551,5 +552,6 @@ body.modal-open{overflow:hidden}
   .group-management-bar select,
   .group-management-bar .btn{
     width:100%;
+    max-width:100%;
   }
 }
